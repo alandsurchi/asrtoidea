@@ -10,8 +10,9 @@ const router = express.Router();
 router.post('/register', async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
 
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({
         success: false,
         message: 'Name, email, and password are required.',
@@ -19,7 +20,7 @@ router.post('/register', async (req, res, next) => {
     }
 
     // Check if email already exists
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
+    const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
     if (existing.rows.length > 0) {
       return res.status(409).json({
         success: false,
@@ -32,10 +33,10 @@ router.post('/register', async (req, res, next) => {
 
     await query(
       `INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4)`,
-      [id, name, email, passwordHash]
+      [id, name, normalizedEmail, passwordHash]
     );
 
-    const user = { id, name, email };
+    const user = { id, name, email: normalizedEmail };
     const token = generateToken(user);
 
     res.status(201).json({
@@ -51,16 +52,32 @@ router.post('/register', async (req, res, next) => {
 // ─── POST /api/v1/auth/login ────────────────────────────────────────────────
 router.post('/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const password = req.body.password;
+    const identifier = (req.body.email || req.body.identifier || '').trim();
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required.',
+        message: 'Email or username and password are required.',
       });
     }
 
-    const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+    const isEmailIdentifier = identifier.includes('@');
+    const normalizedIdentifier = identifier.toLowerCase();
+
+    const result = isEmailIdentifier
+      ? await query(
+          `SELECT * FROM users
+           WHERE LOWER(email) = $1
+           LIMIT 1`,
+          [normalizedIdentifier]
+        )
+      : await query(
+          `SELECT * FROM users
+           WHERE LOWER(COALESCE(nick_name, '')) = $1
+           LIMIT 1`,
+          [normalizedIdentifier]
+        );
     if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
@@ -135,6 +152,20 @@ router.get('/profile', authenticate, async (req, res, next) => {
 router.put('/profile', authenticate, async (req, res, next) => {
   try {
     const { name, email, profileImagePath, nickName, phone, address, job } = req.body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : null;
+
+    if (normalizedEmail) {
+      const conflict = await query(
+        'SELECT id FROM users WHERE LOWER(email) = $1 AND id <> $2',
+        [normalizedEmail, req.user.id]
+      );
+      if (conflict.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: 'An account with this email already exists.',
+        });
+      }
+    }
 
     const result = await query(
       `UPDATE users SET
@@ -148,7 +179,7 @@ router.put('/profile', authenticate, async (req, res, next) => {
         updated_at = NOW()
       WHERE id = $8
       RETURNING *`,
-      [name, email, profileImagePath, nickName, phone, address, job, req.user.id]
+      [name, normalizedEmail, profileImagePath, nickName, phone, address, job, req.user.id]
     );
 
     if (result.rows.length === 0) {

@@ -13,19 +13,17 @@ router.get('/', authenticate, async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
 
-    const countResult = await query(
-      'SELECT COUNT(*) FROM projects WHERE user_id = $1',
-      [req.user.id]
-    );
+    const countResult = await query('SELECT COUNT(*) FROM projects');
     const totalItems = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalItems / limit);
 
     const result = await query(
-      `SELECT * FROM projects
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [req.user.id, limit, offset]
+      `SELECT p.*, u.id AS author_id, COALESCE(u.nick_name, u.name) AS author_name
+       FROM projects p
+       LEFT JOIN users u ON u.id = p.user_id
+       ORDER BY p.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
 
     const projects = result.rows.map(mapProjectRow);
@@ -46,8 +44,11 @@ router.get('/', authenticate, async (req, res, next) => {
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT * FROM projects WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.user.id]
+      `SELECT p.*, u.id AS author_id, COALESCE(u.nick_name, u.name) AS author_name
+       FROM projects p
+       LEFT JOIN users u ON u.id = p.user_id
+       WHERE p.id = $1`,
+      [req.params.id]
     );
 
     if (result.rows.length === 0) {
@@ -191,6 +192,8 @@ router.delete('/:id', authenticate, async (req, res, next) => {
 function mapProjectRow(row) {
   return {
     id: row.id,
+    createdById: row.author_id || row.user_id,
+    createdByName: row.author_name || null,
     title: row.title,
     description: row.description,
     backgroundImage: row.background_image,
