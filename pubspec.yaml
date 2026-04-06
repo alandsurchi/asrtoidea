@@ -19,6 +19,8 @@ dependencies:
   carousel_slider_plus: ^7.0.1
   intl: any
   google_fonts: ^6.2.1
+  http: ^1.2.2
+  flutter_dotenv: ^6.0.0
 dev_dependencies: 
   flutter_test:    # 🚨 CRITICAL: Required for Flutter project testing - DO NOT REMOVE
     sdk: flutter    # 🚨 CRITICAL: Required for Flutter project testing - DO NOT REMOVE

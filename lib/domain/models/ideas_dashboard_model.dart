@@ -37,6 +37,30 @@ class IdeasDashboardModel extends Equatable {
 
   @override
   List<Object?> get props => [ideaCardsList, additionalIdeasList, allIdeasList, id];
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ideaCardsList': ideaCardsList?.map((e) => e.toJson()).toList(),
+      'additionalIdeasList': additionalIdeasList?.map((e) => e.toJson()).toList(),
+      'allIdeasList': allIdeasList?.map((e) => e.toJson()).toList(),
+      'id': id,
+    };
+  }
+
+  factory IdeasDashboardModel.fromJson(Map<String, dynamic> json) {
+    return IdeasDashboardModel(
+      ideaCardsList: (json['ideaCardsList'] as List<dynamic>?)
+          ?.map((e) => IdeaCardModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      additionalIdeasList: (json['additionalIdeasList'] as List<dynamic>?)
+          ?.map((e) => IdeaCardModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      allIdeasList: (json['allIdeasList'] as List<dynamic>?)
+          ?.map((e) => IdeaCardModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      id: json['id'] as String?,
+    );
+  }
 }
 
 class IdeaCardModel extends Equatable {

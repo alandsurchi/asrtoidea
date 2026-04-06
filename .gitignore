@@ -8,7 +8,7 @@
 /.packages
 /.idea/.wiseGPT/
 /ios/Podfile
-
+/pubspec.lock
 
 # Env files
 *.env
