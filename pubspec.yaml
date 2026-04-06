@@ -1,0 +1,70 @@
+name: ai_idea_generator
+description: A new Flutter project.
+version: 1.0.0+1
+environment: 
+  sdk: ^3.9.0
+dependencies: 
+  flutter:   # 🚨 CRITICAL: Required for every Flutter project - DO NOT REMOVE
+    sdk: flutter # 🚨 CRITICAL: Required for every Flutter project - DO NOT REMOVE
+  flutter_localizations: 
+    sdk: flutter
+  flutter_svg: ^2.0.12
+  cached_network_image: ^3.4.1
+  shared_preferences: ^2.3.3
+  connectivity_plus: ^6.1.0
+  flutter_riverpod: ^2.5.1
+  equatable: ^2.0.5
+  image_picker: ^1.0.4
+  permission_handler: ^11.1.0
+  carousel_slider_plus: ^7.0.1
+  intl: any
+  google_fonts: ^6.2.1
+dev_dependencies: 
+  flutter_test:    # 🚨 CRITICAL: Required for Flutter project testing - DO NOT REMOVE
+    sdk: flutter    # 🚨 CRITICAL: Required for Flutter project testing - DO NOT REMOVE
+flutter: 
+  uses-material-design: true # 🚨 CRITICAL: Required for Material icon font - DO NOT REMOVE
+  assets: 
+    - assets/
+    - assets/images/
+  fonts: 
+    - family: Poppins
+      fonts: 
+        - asset: assets/fonts/PoppinsSemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PoppinsMedium.ttf
+          weight: 500
+        - asset: assets/fonts/PoppinsRegular.ttf
+          weight: 400
+        - asset: assets/fonts/PoppinsExtraLight.ttf
+          weight: 200
+    - family: Jua
+      fonts: 
+        - asset: assets/fonts/JuaRegular.ttf
+          weight: 400
+    - family: Karla
+      fonts: 
+        - asset: assets/fonts/KarlaMedium.ttf
+          weight: 500
+        - asset: assets/fonts/KarlaRegular.ttf
+          weight: 400
+    - family: Lemon
+      fonts: 
+        - asset: assets/fonts/LemonRegular.ttf
+          weight: 400
+    - family: Inter
+      fonts: 
+        - asset: assets/fonts/InterBold.ttf
+          weight: 700
+        - asset: assets/fonts/InterRegular.ttf
+          weight: 400
+    - family: Sarchia
+      fonts: 
+        - asset: assets/fonts/27_Sarchia_Blawkrawa_2.ttf
+          weight: 400
+
+  # 🚨 CRITICAL ASSET MANAGEMENT RULES:
+  # - DO NOT ADD NEW ASSET DIRECTORIES (assets/svg/, assets/icons/, etc.)
+  # - ONLY USE EXISTING AND ITEMS AVAILABLE IN THE DIRECTORIES LISTED ABOVE (assets/, assets/images/)
+
+  # Kurdish UI: Sarchia (27_Sarchia_Blawkrawa_2.ttf) — see ThemeData / locale `ku`.
