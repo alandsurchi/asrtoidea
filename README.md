@@ -17,6 +17,55 @@ flutter pub get
 ```bash
 flutter run
 ```
+
+### Web Development Session Persistence (Important)
+When running with `flutter run -d chrome`, browser storage may reset between runs,
+which can make saved login sessions appear lost.
+
+Use this command to keep a fixed Chrome profile (and keep your auth token/session):
+```bash
+flutter run -d chrome --web-port 7357 --web-browser-flag="--user-data-dir=%USERPROFILE%\\AppData\\Local\\ai_idea_generator_chrome_profile"
+```
+
+Or run one of these VS Code tasks:
+- `Flutter Web (Persistent Chrome Profile)`
+- `Flutter Web (Auto Free 7357 + Persistent Profile)` (recommended on Windows; clears stale port usage first)
+
+### Railway Auth + Explore Verification
+Use this script to verify three core behaviors on Railway:
+- Profile data is account-specific
+- Ideas are private per account
+- Explore feed is global across accounts
+
+Run:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\verify_railway_auth_explore.ps1
+```
+
+If Explore is still not global, deploy the latest backend changes first, then rerun the script.
+
+### Public Web Deployment (Free via Vercel)
+Frontend is now deployed publicly on Vercel.
+
+Current live link:
+https://web-sand-eight-49.vercel.app/
+
+One-command deployment from repo root:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy_web_vercel.ps1
+```
+
+VS Code task:
+- `Deploy Web to Vercel (Production)`
+
+Automatic deploy status:
+- Enabled via GitHub integration (repo: `alandsurchi/asrtoidea`)
+- Production branch: `main`
+- Any new push to `main` triggers a fresh production deployment automatically
+
+Notes:
+- Backend API remains on Railway: `https://asrtoidea-production.up.railway.app/api/v1`
+- If prompted by CLI, complete `vercel login` once, then rerun deploy.
 ## 📁 Project Structure
 ```
 flutter_app/
