@@ -54,6 +54,30 @@ class ProfilePostsNotifier extends StateNotifier<ProfilePostsState> {
     }
   }
 
+  Future<void> toggleLike(ProjectCardModel post) async {
+    final postId = (post.id ?? '').trim();
+    if (postId.isEmpty) return;
+
+    // One-like-per-post behavior: once liked, keep it liked.
+    if (post.isLiked == true) return;
+
+    final previousPosts = state.posts;
+    final previousCount = post.likeCount ?? 0;
+    final optimistic = post.copyWith(isLiked: true, likeCount: previousCount + 1);
+
+    state = state.copyWith(posts: _replacePost(previousPosts, optimistic));
+
+    try {
+      final updated = await _repository.toggleLike(postId, true);
+      state = state.copyWith(posts: _replacePost(state.posts, updated));
+    } catch (error) {
+      state = state.copyWith(
+        posts: previousPosts,
+        errorMessage: appErrorMessage(error),
+      );
+    }
+  }
+
   List<ProjectCardModel> _replacePost(
     List<ProjectCardModel> source,
     ProjectCardModel updated,

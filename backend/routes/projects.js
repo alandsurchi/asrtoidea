@@ -22,7 +22,19 @@ router.get('/', authenticate, async (req, res, next) => {
 
     const result = await query(
       `SELECT p.*, u.id AS author_id, COALESCE(u.nick_name, u.name) AS author_name,
-              u.profile_image_path AS author_avatar
+              u.profile_image_path AS author_avatar,
+              (
+                SELECT COUNT(*)::int
+                FROM entity_likes el
+                WHERE el.entity_type = 'project' AND el.entity_id = p.id
+              ) AS like_count_total,
+              EXISTS (
+                SELECT 1
+                FROM entity_likes me
+                WHERE me.entity_type = 'project'
+                  AND me.entity_id = p.id
+                  AND me.user_id = $1
+              ) AS liked_by_me
        FROM projects p
        LEFT JOIN users u ON u.id = p.user_id
        WHERE p.user_id = $1 OR COALESCE(p.is_public, TRUE) = TRUE

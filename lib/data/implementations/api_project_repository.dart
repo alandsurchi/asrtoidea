@@ -109,6 +109,72 @@ class ApiProjectRepository implements ProjectRepository {
   }
 
   @override
+  Future<ProjectCardModel> toggleLike(String projectId, bool isLiked) async {
+    try {
+      final response = await _apiClient.put(
+        '/projects/$projectId/like',
+        body: {'isLiked': isLiked},
+      );
+
+      final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+        response,
+        (json) => (json as Map).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+
+      final likePayload = apiResponse.data ?? <String, dynamic>{};
+      final resolvedLiked = likePayload['isLiked'] == true;
+      final resolvedLikeCount = _toInt(likePayload['likeCount']);
+
+      final current = await LocalStorageService.loadProjectsList() ?? [];
+      final idx = current.indexWhere((p) => p.id == projectId);
+
+      if (idx != -1) {
+        final updated = current[idx].copyWith(
+          isLiked: resolvedLiked,
+          likeCount: resolvedLikeCount,
+        );
+        current[idx] = updated;
+        await LocalStorageService.saveProjectsList(current);
+        return updated;
+      }
+
+      final fullResponse = await _apiClient.get('/projects/$projectId');
+      final fullParsed = ApiResponse<ProjectCardModel>.fromJson(
+        fullResponse,
+        (json) => ProjectCardModel.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (fullParsed.data == null) {
+        throw Exception('Failed to resolve liked project after update.');
+      }
+
+      final fetched = fullParsed.data!;
+      await LocalStorageService.saveProjectsList([fetched, ...current]);
+      return fetched;
+    } catch (e) {
+      if (!_shouldFallbackToLocal(e)) rethrow;
+      final current = await LocalStorageService.loadProjectsList() ?? [];
+      final idx = current.indexWhere((p) => p.id == projectId);
+      if (idx == -1) throw Exception('Project not found: $projectId');
+
+      final previousCount = current[idx].likeCount ?? 0;
+      final optimisticCount = isLiked
+          ? previousCount + 1
+          : (previousCount > 0 ? previousCount - 1 : 0);
+
+      final updated = current[idx].copyWith(
+        isLiked: isLiked,
+        likeCount: optimisticCount,
+      );
+      current[idx] = updated;
+      await LocalStorageService.saveProjectsList(current);
+      return updated;
+    }
+  }
+
+  @override
   Future<ProjectCardModel> addComment(String projectId, String comment) async {
     // TODO: Connecting to Railway endpoint...
     // Example: POST /projects/$projectId/comments
@@ -176,5 +242,11 @@ class ApiProjectRepository implements ProjectRepository {
     }
 
     return true;
+  }
+
+  int _toInt(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
 }

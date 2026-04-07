@@ -222,6 +222,8 @@ class AppLocalizations {
     String get profileLoadHint => _t('profileLoadHint');
     String get removeSaved => _t('removeSaved');
     String get openPost => _t('openPost');
+        String get publicPostVisibility => _t('publicPostVisibility');
+        String get privatePostVisibility => _t('privatePostVisibility');
   String get remindersTitle => _t('remindersTitle');
   String get remindersDesc => _t('remindersDesc');
   String get upgradePlanTitle => _t('upgradePlanTitle');
@@ -425,6 +427,8 @@ class AppLocalizations {
     'profileLoadHint': 'Profile is still loading. Pull to refresh and try again.',
     'removeSaved': 'Remove Save',
     'openPost': 'Open Post',
+        'publicPostVisibility': 'Public',
+        'privatePostVisibility': 'Private',
       'remindersTitle': 'Reminders',
       'remindersDesc':
           'Set up daily reminders to keep track of your ideas and tasks.',

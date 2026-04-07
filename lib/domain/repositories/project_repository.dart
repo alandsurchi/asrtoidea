@@ -11,6 +11,9 @@ abstract class ProjectRepository {
   /// Toggles the saved state of project [projectId].
   Future<ProjectCardModel> toggleSave(String projectId, bool isSaved);
 
+  /// Toggles the liked state of project [projectId].
+  Future<ProjectCardModel> toggleLike(String projectId, bool isLiked);
+
   /// Appends [comment] to the project's comment list.
   Future<ProjectCardModel> addComment(String projectId, String comment);
 }

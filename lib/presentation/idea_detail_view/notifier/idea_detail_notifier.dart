@@ -61,31 +61,43 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
     final current = state.ideaDetail;
     if (current == null) return;
 
-    final optimistic = current.copyWith(
-      isLiked: !current.isLiked,
-      likeCount: current.isLiked
-          ? current.likeCount - 1
-          : current.likeCount + 1,
-    );
-    state = state.copyWith(ideaDetail: optimistic);
+    // One-like-per-post behavior: always enforce liked=true.
+    // If already liked, keep UI state and just re-sync with backend.
+    final optimistic = current.isLiked
+        ? current
+        : current.copyWith(
+            isLiked: true,
+            likeCount: current.likeCount + 1,
+          );
+
+    if (!current.isLiked) {
+      state = state.copyWith(ideaDetail: optimistic);
+    }
 
     try {
       final likeResult = await _repository.toggleEntityLike(
         entityType: _args.entityType,
         id: _args.id,
-        isLiked: optimistic.isLiked,
+        isLiked: true,
       );
 
       state = state.copyWith(
         ideaDetail: optimistic.copyWith(
-          likeCount: (likeResult['likeCount'] as num?)?.toInt() ??
-              optimistic.likeCount,
-          isLiked: likeResult['isLiked'] == true,
+          likeCount: _toInt(likeResult['likeCount']) ?? optimistic.likeCount,
+          isLiked: likeResult['isLiked'] == true || optimistic.isLiked,
         ),
       );
     } catch (_) {
-      state = state.copyWith(ideaDetail: current);
+      if (!current.isLiked) {
+        state = state.copyWith(ideaDetail: current);
+      }
     }
+  }
+
+  int? _toInt(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '');
   }
 
   void toggleSave() {

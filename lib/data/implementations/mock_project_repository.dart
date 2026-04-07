@@ -42,6 +42,26 @@ class MockProjectRepository implements ProjectRepository {
   }
 
   @override
+  Future<ProjectCardModel> toggleLike(String projectId, bool isLiked) async {
+    final projects = await _ensureLoaded();
+    final index = projects.indexWhere((p) => p.id == projectId);
+    if (index == -1) throw Exception('Project not found: $projectId');
+
+    final previousCount = projects[index].likeCount ?? 0;
+    final nextCount = isLiked
+        ? previousCount + 1
+        : (previousCount > 0 ? previousCount - 1 : 0);
+
+    final updated = projects[index].copyWith(
+      isLiked: isLiked,
+      likeCount: nextCount,
+    );
+    _cache = List<ProjectCardModel>.from(projects)..[index] = updated;
+    await LocalStorageService.saveProjectsList(_cache!);
+    return updated;
+  }
+
+  @override
   Future<ProjectCardModel> addComment(String projectId, String comment) async {
     if (comment.trim().isEmpty) throw Exception('Comment cannot be empty');
     final projects = await _ensureLoaded();

@@ -1,6 +1,7 @@
 import '../../core/errors/app_exception.dart';
 import '../../domain/models/idea_detail_model.dart';
 import '../../domain/repositories/idea_detail_repository.dart';
+import '../../services/local_storage_service.dart';
 import '../network/api_client.dart';
 import '../network/api_response.dart';
 
@@ -65,7 +66,26 @@ class ApiIdeaDetailRepository implements IdeaDetailRepository {
       ),
     );
 
-    return parsed.data ?? {'likeCount': 0, 'isLiked': isLiked};
+    final data = parsed.data ?? {'likeCount': 0, 'isLiked': isLiked};
+
+    if (_prefix(entityType) == '/projects') {
+      try {
+        final projects = await LocalStorageService.loadProjectsList() ?? [];
+        final index = projects.indexWhere((p) => (p.id ?? '').trim() == id.trim());
+        if (index != -1) {
+          projects[index] = projects[index].copyWith(
+            isLiked: data['isLiked'] == true,
+            likeCount: (data['likeCount'] as num?)?.toInt() ??
+                (projects[index].likeCount ?? 0),
+          );
+          await LocalStorageService.saveProjectsList(projects);
+        }
+      } catch (_) {
+        // Best-effort cache sync only; network response remains source of truth.
+      }
+    }
+
+    return data;
   }
 
   @override
