@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_export.dart';
 import '../main_shell_screen/main_shell_screen.dart';
+import '../settings_screen/notifier/settings_notifier.dart';
 import './widgets/idea_card_widget.dart';
 import './widgets/status_filter_tab.dart';
 import 'notifier/ideas_dashboard_notifier.dart';
@@ -48,37 +49,86 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
 
   Widget _buildAppBarSection(BuildContext context, bool isRtl) {
     final loc = AppLocalizations.of(context)!;
-    return CustomAppBar(
-      profileImagePath: ImageConstant.imgUserProfilePhoto,
-      userName: 'Aland Raed',
-      welcomeMessage: loc.welcomeBack,
-      showProfile: true,
-      actions: [
-        GestureDetector(
-          onTap: () {
-            MainShellScreen.goToNotifications();
-          },
-          child: Container(
-            width: 40.h,
-            height: 40.h,
-            padding: EdgeInsets.all(8.h),
-            margin: isRtl
-                ? EdgeInsets.only(right: 8.h)
-                : EdgeInsets.only(left: 8.h),
-            decoration: BoxDecoration(
-              color: Color(0xFFFBD060),
-              borderRadius: BorderRadius.circular(10.h),
+    return Consumer(
+      builder: (context, ref, _) {
+        final settingsModel = ref.watch(settingsNotifier).settingsModel;
+        final displayName = _resolveDisplayName(
+          settingsModel?.userName,
+          settingsModel?.userEmail,
+        );
+        final profileImagePath = _sanitizeProfileImagePath(
+          settingsModel?.profileImagePath,
+        );
+
+        return CustomAppBar(
+          profileImagePath: profileImagePath,
+          userName: displayName,
+          welcomeMessage: loc.welcomeBack,
+          showProfile: true,
+          actions: [
+            GestureDetector(
+              onTap: () {
+                MainShellScreen.goToNotifications();
+              },
+              child: Container(
+                width: 40.h,
+                height: 40.h,
+                padding: EdgeInsets.all(8.h),
+                margin: isRtl
+                    ? EdgeInsets.only(right: 8.h)
+                    : EdgeInsets.only(left: 8.h),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFBD060),
+                  borderRadius: BorderRadius.circular(10.h),
+                ),
+                child: CustomImageView(
+                  imagePath: ImageConstant.imgGroup90,
+                  height: 24.h,
+                  width: 24.h,
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
-            child: CustomImageView(
-              imagePath: ImageConstant.imgGroup90,
-              height: 24.h,
-              width: 24.h,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
+  }
+
+  String _resolveDisplayName(String? userName, String? userEmail) {
+    final name = userName?.trim() ?? '';
+    if (name.isNotEmpty) {
+      return name;
+    }
+
+    final email = userEmail?.trim() ?? '';
+    if (email.contains('@')) {
+      final localPart = email.split('@').first.trim();
+      if (localPart.isNotEmpty) {
+        return localPart;
+      }
+    }
+
+    return 'User';
+  }
+
+  String? _sanitizeProfileImagePath(String? imagePath) {
+    final value = imagePath?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final legacyPlaceholders = <String>{
+      ImageConstant.imgUserProfilePhoto,
+      ImageConstant.imgImage,
+      ImageConstant.imgImage176x160,
+    };
+
+    if (legacyPlaceholders.contains(value)) {
+      return null;
+    }
+
+    return value;
   }
 
   Widget _buildWelcomeSection(BuildContext context, bool isRtl, bool isDark) {

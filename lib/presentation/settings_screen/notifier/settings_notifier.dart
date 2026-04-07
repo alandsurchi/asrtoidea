@@ -29,15 +29,18 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     try {
       saved = await LocalStorageService.loadProfile();
+      saved = _sanitizeSettingsModel(saved);
     } catch (e) {
       dev.log('SettingsNotifier.loadProfile(local) failed', error: e);
     }
 
     try {
       final profile = await _authRepository.getUserProfile();
-      final mapped = SettingsModel.fromUserProfile(
-        profile,
-        current: saved ?? state.settingsModel,
+      final mapped = _sanitizeSettingsModel(
+        SettingsModel.fromUserProfile(
+          profile,
+          current: saved ?? state.settingsModel,
+        ),
       );
 
       state = state.copyWith(
@@ -49,7 +52,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     } catch (e) {
       dev.log('SettingsNotifier.loadProfile(remote) failed', error: e);
       state = state.copyWith(
-        settingsModel: saved ?? SettingsModel.guest(current: state.settingsModel),
+        settingsModel:
+            saved ?? _sanitizeSettingsModel(SettingsModel.guest(current: state.settingsModel)),
         isLoading: false,
         isSuccess: false,
       );
@@ -68,7 +72,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       settingsModel: state.settingsModel?.copyWith(
         userName: name,
         userEmail: email,
-        profileImagePath: imagePath ?? state.settingsModel?.profileImagePath,
+        profileImagePath: _sanitizeProfileImagePath(
+              imagePath ?? state.settingsModel?.profileImagePath,
+            ) ??
+            '',
       ),
     );
     _persistProfile();
@@ -76,7 +83,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   void updateProfileImage(String imagePath) {
     state = state.copyWith(
-      settingsModel: state.settingsModel?.copyWith(profileImagePath: imagePath),
+      settingsModel: state.settingsModel?.copyWith(
+        profileImagePath: _sanitizeProfileImagePath(imagePath) ?? '',
+      ),
     );
     _persistProfile();
   }
@@ -89,5 +98,36 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       dev.log('SettingsNotifier._persistProfile failed', error: e);
       // Don't surface storage errors — profile already updated in memory
     }
+  }
+
+  SettingsModel _sanitizeSettingsModel(SettingsModel? model) {
+    final base = model ?? SettingsModel.guest(current: state.settingsModel);
+    return SettingsModel(
+      id: base.id,
+      userName: base.userName,
+      userEmail: base.userEmail,
+      profileImagePath: _sanitizeProfileImagePath(base.profileImagePath),
+      isDarkMode: base.isDarkMode,
+      isLoading: base.isLoading,
+    );
+  }
+
+  String? _sanitizeProfileImagePath(String? imagePath) {
+    final value = imagePath?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final legacyPlaceholders = <String>{
+      ImageConstant.imgUserProfilePhoto,
+      ImageConstant.imgImage,
+      ImageConstant.imgImage176x160,
+    };
+
+    if (legacyPlaceholders.contains(value)) {
+      return null;
+    }
+
+    return value;
   }
 }

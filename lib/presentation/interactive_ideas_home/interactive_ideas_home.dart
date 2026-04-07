@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_export.dart';
 import '../main_shell_screen/main_shell_screen.dart';
+import '../settings_screen/notifier/settings_notifier.dart';
 import './widgets/home_filter_tabs_widget.dart';
 import './widgets/home_search_bar_widget.dart';
 import './widgets/idea_detail_bottom_sheet.dart';
@@ -164,35 +165,34 @@ class InteractiveIdeasHomeState extends ConsumerState<InteractiveIdeasHome> {
   }
 
   Widget _buildHeader() {
+    final localizations = AppLocalizations.of(context)!;
+    final settingsModel = ref.watch(settingsNotifier).settingsModel;
+    final displayName = _resolveDisplayName(
+      settingsModel?.userName,
+      settingsModel?.userEmail,
+    );
+    final profileImagePath = _sanitizeProfileImagePath(
+      settingsModel?.profileImagePath,
+    );
+
     return Padding(
       padding: EdgeInsets.fromLTRB(20.h, 16.h, 20.h, 0),
       child: Row(
         children: [
-          // Avatar
-          Container(
-            width: 44.h,
-            height: 44.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFF3B1FCC)],
-              ),
-            ),
-            child: const Icon(Icons.person, color: Colors.white, size: 22),
-          ),
+          _buildHeaderAvatar(displayName, profileImagePath),
           SizedBox(width: 12.h),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back 👋',
+                  '${localizations.welcomeBack} 👋',
                   style: TextStyleHelper.instance.title13MediumPoppins.copyWith(
                     color: const Color(0xFF888888),
                   ),
                 ),
                 Text(
-                  'Aram Satar',
+                  displayName,
                   style: TextStyleHelper.instance.title16SemiBoldPoppins
                       .copyWith(color: const Color(0xFF1A1A2E)),
                 ),
@@ -246,6 +246,90 @@ class InteractiveIdeasHomeState extends ConsumerState<InteractiveIdeasHome> {
         ],
       ),
     );
+  }
+
+  Widget _buildHeaderAvatar(String displayName, String? profileImagePath) {
+    if (profileImagePath != null && profileImagePath.isNotEmpty) {
+      return ClipOval(
+        child: CustomImageView(
+          imagePath: profileImagePath,
+          width: 44.h,
+          height: 44.h,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return Container(
+      width: 44.h,
+      height: 44.h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7C3AED), Color(0xFF3B1FCC)],
+        ),
+      ),
+      child: Text(
+        _extractInitials(displayName),
+        style: TextStyleHelper.instance.title13SemiBoldPoppins.copyWith(
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  String _resolveDisplayName(String? userName, String? userEmail) {
+    final name = userName?.trim() ?? '';
+    if (name.isNotEmpty) {
+      return name;
+    }
+
+    final email = userEmail?.trim() ?? '';
+    if (email.contains('@')) {
+      final localPart = email.split('@').first.trim();
+      if (localPart.isNotEmpty) {
+        return localPart;
+      }
+    }
+
+    return 'User';
+  }
+
+  String _extractInitials(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return '?';
+    }
+
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts.first[0].toUpperCase();
+  }
+
+  String? _sanitizeProfileImagePath(String? imagePath) {
+    final value = imagePath?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final legacyPlaceholders = <String>{
+      ImageConstant.imgUserProfilePhoto,
+      ImageConstant.imgImage,
+      ImageConstant.imgImage176x160,
+    };
+
+    if (legacyPlaceholders.contains(value)) {
+      return null;
+    }
+
+    return value;
   }
 
   Widget _buildWelcomeBanner() {

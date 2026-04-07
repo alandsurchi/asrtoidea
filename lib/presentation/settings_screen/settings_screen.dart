@@ -129,11 +129,9 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
   ) {
     final settingsState = ref.watch(settingsNotifier);
     final model = settingsState.settingsModel;
-    final userName = model?.userName ?? "Unknown User";
-    final userEmail = model?.userEmail ?? "No email provided";
-    final imagePath = model?.profileImagePath != null && model!.profileImagePath!.isNotEmpty 
-        ? model.profileImagePath 
-        : ImageConstant.imgImage;
+    final userName = _resolveDisplayName(model?.userName, model?.userEmail);
+    final userEmail = model?.userEmail?.trim() ?? '';
+    final imagePath = _sanitizeProfileImagePath(model?.profileImagePath);
 
     return GestureDetector(
       onTap: () => onTapEditProfile(context),
@@ -161,12 +159,7 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                 border: Border.all(color: appTheme.whiteCustom, width: 2.h),
               ),
               child: ClipOval(
-                child: CustomImageView(
-                  imagePath: imagePath,
-                  height: 64.h,
-                  width: 64.h,
-                  fit: BoxFit.cover,
-                ),
+                child: _buildProfileAvatar(userName: userName, imagePath: imagePath),
               ),
             ),
             SizedBox(width: 12.h),
@@ -184,17 +177,19 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                     style: TextStyleHelper.instance.title16SemiBoldSans
                         .copyWith(color: Color(0xFFFFFFFF)),
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    userEmail,
-                    textDirection: isRtl
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
-                    style: TextStyleHelper.instance.label11RegularSans.copyWith(
-                      color: Color(0xCCFFFFFF),
+                  if (userEmail.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      userEmail,
+                      textDirection: isRtl
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                      style: TextStyleHelper.instance.label11RegularSans.copyWith(
+                        color: Color(0xCCFFFFFF),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -216,6 +211,90 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileAvatar({required String userName, String? imagePath}) {
+    if (imagePath != null && imagePath.isNotEmpty) {
+      return CustomImageView(
+        imagePath: imagePath,
+        height: 64.h,
+        width: 64.h,
+        fit: BoxFit.cover,
+      );
+    }
+
+    return Container(
+      width: 64.h,
+      height: 64.h,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFDEE4FF), Color(0xFFC8D2FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Text(
+        _extractInitials(userName),
+        style: TextStyleHelper.instance.title16SemiBoldSans.copyWith(
+          color: const Color(0xFF1D2B53),
+        ),
+      ),
+    );
+  }
+
+  String _resolveDisplayName(String? userName, String? userEmail) {
+    final name = userName?.trim() ?? '';
+    if (name.isNotEmpty) {
+      return name;
+    }
+
+    final email = userEmail?.trim() ?? '';
+    if (email.contains('@')) {
+      final localPart = email.split('@').first.trim();
+      if (localPart.isNotEmpty) {
+        return localPart;
+      }
+    }
+
+    return 'User';
+  }
+
+  String _extractInitials(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return '?';
+    }
+
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts.first[0].toUpperCase();
+  }
+
+  String? _sanitizeProfileImagePath(String? imagePath) {
+    final value = imagePath?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final legacyPlaceholders = <String>{
+      ImageConstant.imgUserProfilePhoto,
+      ImageConstant.imgImage,
+      ImageConstant.imgImage176x160,
+    };
+
+    if (legacyPlaceholders.contains(value)) {
+      return null;
+    }
+
+    return value;
   }
 
   Widget _buildUpgradePlanCard(

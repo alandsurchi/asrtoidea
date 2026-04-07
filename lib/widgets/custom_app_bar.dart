@@ -87,7 +87,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildAppBarContent(BuildContext context, bool isRtl) {
     final bool shouldShowProfile = showProfile ?? false;
 
-    if (shouldShowProfile && profileImagePath != null) {
+    if (shouldShowProfile &&
+        (profileImagePath != null || userName != null || welcomeMessage != null)) {
       return _buildProfileAppBar(context, isRtl);
     } else if (title != null) {
       return _buildTitleAppBar(context, isRtl);
@@ -133,26 +134,72 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildProfileSection(bool isRtl) {
+    final hasUserName = userName?.trim().isNotEmpty ?? false;
+    final hasWelcomeMessage = welcomeMessage?.trim().isNotEmpty ?? false;
+
     return Row(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       children: [
-        if (profileImagePath != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(27.h),
-            child: CustomImageView(
-              imagePath: profileImagePath!,
-              height: 48.h,
-              width: 48.h,
-              fit: BoxFit.cover,
-            ),
-          ),
-        if (profileImagePath != null &&
-            (userName != null || welcomeMessage != null))
+        _buildProfileAvatar(),
+        if (hasUserName || hasWelcomeMessage)
           SizedBox(width: 8.h),
-        if (userName != null || welcomeMessage != null)
+        if (hasUserName || hasWelcomeMessage)
           _buildUserInfoColumn(isRtl),
       ],
     );
+  }
+
+  Widget _buildProfileAvatar() {
+    final imagePath = profileImagePath?.trim() ?? '';
+    if (imagePath.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(27.h),
+        child: CustomImageView(
+          imagePath: imagePath,
+          height: 48.h,
+          width: 48.h,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return Container(
+      width: 48.h,
+      height: 48.h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFDEE4FF), Color(0xFFC8D2FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Text(
+        _extractInitials(userName),
+        style: TextStyleHelper.instance.title16SemiBoldSans.copyWith(
+          color: const Color(0xFF1D2B53),
+        ),
+      ),
+    );
+  }
+
+  String _extractInitials(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return '?';
+    }
+
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts.first[0].toUpperCase();
   }
 
   Widget _buildUserInfoColumn(bool isRtl) {
@@ -163,25 +210,29 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ? const Color(0xFF9E9E9E)
             : const Color(0xFF888888);
         final nameColor = isDark ? Colors.white : const Color(0xFF000000);
+        final welcome = welcomeMessage?.trim();
+        final name = userName?.trim();
+        final hasWelcome = welcome?.isNotEmpty ?? false;
+        final hasName = name?.isNotEmpty ?? false;
         return Column(
           crossAxisAlignment: isRtl
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (welcomeMessage != null)
+            if (hasWelcome)
               Text(
-                welcomeMessage!,
+                welcome!,
                 textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
                 style: TextStyleHelper.instance.title12RegularSans.copyWith(
                   color: subTextColor,
                   height: 1.25,
                 ),
               ),
-            if (userName != null) ...[
+            if (hasName) ...[
               SizedBox(height: 2.h),
               Text(
-                userName!,
+                name!,
                 textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
                 style: TextStyleHelper.instance.headline20BoldSans.copyWith(
                   color: nameColor,
