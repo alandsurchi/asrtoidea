@@ -83,6 +83,7 @@ class IdeaCardModel extends Equatable {
     this.isLiked,
     this.isPublic,
     this.canEdit,
+    this.linkedProjectId,
     this.id,
     this.timestamp,
   }) {
@@ -104,6 +105,7 @@ class IdeaCardModel extends Equatable {
     isLiked = isLiked ?? false;
     isPublic = isPublic ?? true;
     canEdit = canEdit ?? false;
+    linkedProjectId = linkedProjectId ?? '';
     id = id ?? "";
     timestamp = timestamp ?? DateTime.now();
   }
@@ -126,6 +128,7 @@ class IdeaCardModel extends Equatable {
   bool? isLiked;
   bool? isPublic;
   bool? canEdit;
+  String? linkedProjectId;
   String? id;
   DateTime? timestamp;
 
@@ -148,6 +151,7 @@ class IdeaCardModel extends Equatable {
     bool? isLiked,
     bool? isPublic,
     bool? canEdit,
+    String? linkedProjectId,
     String? id,
     DateTime? timestamp,
   }) {
@@ -171,6 +175,7 @@ class IdeaCardModel extends Equatable {
       isLiked: isLiked ?? this.isLiked,
       isPublic: isPublic ?? this.isPublic,
       canEdit: canEdit ?? this.canEdit,
+      linkedProjectId: linkedProjectId ?? this.linkedProjectId,
       id: id ?? this.id,
       timestamp: timestamp ?? this.timestamp,
     );
@@ -196,6 +201,7 @@ class IdeaCardModel extends Equatable {
       'isLiked': isLiked,
       'isPublic': isPublic,
       'canEdit': canEdit,
+      'linkedProjectId': linkedProjectId,
       'id': id,
       'timestamp': timestamp?.toIso8601String(),
     };
@@ -225,6 +231,7 @@ class IdeaCardModel extends Equatable {
       isLiked: json['isLiked'] as bool?,
       isPublic: json['isPublic'] as bool?,
       canEdit: json['canEdit'] as bool?,
+      linkedProjectId: json['linkedProjectId'] as String?,
       id: json['id'] as String?,
       timestamp: json['timestamp'] != null ? DateTime.tryParse(json['timestamp'] as String) : null,
     );
@@ -250,6 +257,7 @@ class IdeaCardModel extends Equatable {
     isLiked,
     isPublic,
     canEdit,
+    linkedProjectId,
     id,
     timestamp,
   ];

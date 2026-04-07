@@ -28,6 +28,7 @@ class ProjectCardModel extends Equatable {
     this.isLiked,
     this.isPublic,
     this.canEdit,
+    this.linkedIdeaId,
     this.createdDate,
     this.timestamp,
   }) {
@@ -54,6 +55,7 @@ class ProjectCardModel extends Equatable {
     isLiked = isLiked ?? false;
     isPublic = isPublic ?? true;
     canEdit = canEdit ?? false;
+    linkedIdeaId = linkedIdeaId ?? "";
     createdDate = createdDate ?? "";
     timestamp = timestamp ?? DateTime.now();
   }
@@ -81,6 +83,7 @@ class ProjectCardModel extends Equatable {
   bool? isLiked;
   bool? isPublic;
   bool? canEdit;
+  String? linkedIdeaId;
   String? createdDate;
   DateTime? timestamp;
 
@@ -108,6 +111,7 @@ class ProjectCardModel extends Equatable {
     bool? isLiked,
     bool? isPublic,
     bool? canEdit,
+    String? linkedIdeaId,
     String? createdDate,
     DateTime? timestamp,
   }) {
@@ -135,6 +139,7 @@ class ProjectCardModel extends Equatable {
       isLiked: isLiked ?? this.isLiked,
       isPublic: isPublic ?? this.isPublic,
       canEdit: canEdit ?? this.canEdit,
+      linkedIdeaId: linkedIdeaId ?? this.linkedIdeaId,
       createdDate: createdDate ?? this.createdDate,
       timestamp: timestamp ?? this.timestamp,
     );
@@ -165,6 +170,7 @@ class ProjectCardModel extends Equatable {
     isLiked,
     isPublic,
     canEdit,
+    linkedIdeaId,
     createdDate,
     timestamp,
   ];
@@ -194,6 +200,7 @@ class ProjectCardModel extends Equatable {
     'isLiked': isLiked,
     'isPublic': isPublic,
     'canEdit': canEdit,
+    'linkedIdeaId': linkedIdeaId,
     'createdDate': createdDate,
     'timestamp': timestamp?.toIso8601String(),
   };
@@ -230,6 +237,7 @@ class ProjectCardModel extends Equatable {
         isLiked: json['isLiked'] as bool?,
         isPublic: json['isPublic'] as bool?,
         canEdit: json['canEdit'] as bool?,
+        linkedIdeaId: json['linkedIdeaId'] as String?,
         createdDate: json['createdDate'] as String?,
         timestamp: json['timestamp'] != null
           ? DateTime.tryParse(json['timestamp'] as String)

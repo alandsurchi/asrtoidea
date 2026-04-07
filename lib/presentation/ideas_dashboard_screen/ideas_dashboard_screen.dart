@@ -286,7 +286,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                       return IdeaCardWidget(
                         idea: idea,
                         onTap: () {
-                          _onTapIdeaCard(context, idea.id);
+                          _onTapIdeaCard(context, idea);
                         },
                       );
                     }).toList() ??
@@ -498,7 +498,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
     Color thumbBgColor,
   ) {
     return GestureDetector(
-      onTap: () => _onTapIdeaCard(context, idea?.id),
+      onTap: () => _onTapIdeaCard(context, idea),
       child: Container(
         padding: EdgeInsets.all(14.h),
         decoration: BoxDecoration(
@@ -833,16 +833,20 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
     );
   }
 
-  void _onTapIdeaCard(BuildContext context, [String? ideaId]) {
-    final resolvedId = (ideaId ?? '').trim();
-    if (resolvedId.isEmpty) return;
+  void _onTapIdeaCard(BuildContext context, [dynamic idea]) {
+    final ideaId = (idea?.id ?? '').toString().trim();
+    if (ideaId.isEmpty) return;
+
+    final linkedProjectId = (idea?.linkedProjectId ?? '').toString().trim();
+    final targetEntityType = linkedProjectId.isNotEmpty ? 'project' : 'idea';
+    final targetId = linkedProjectId.isNotEmpty ? linkedProjectId : ideaId;
 
     Navigator.pushNamed(
       context,
       AppRoutes.ideaDetailView,
       arguments: {
-        'entityType': 'idea',
-        'id': resolvedId,
+        'entityType': targetEntityType,
+        'id': targetId,
       },
     );
   }

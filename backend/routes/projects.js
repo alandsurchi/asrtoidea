@@ -406,16 +406,21 @@ router.post('/', authenticate, async (req, res, next) => {
       viewCount,
       likeCount,
       isPublic,
+      linkedIdeaId,
     } = req.body;
 
     const id = uuidv4();
+    const normalizedLinkedIdeaId =
+      typeof linkedIdeaId === 'string' && linkedIdeaId.trim()
+        ? linkedIdeaId.trim()
+        : null;
 
     await query(
       `INSERT INTO projects
         (id, title, description, background_image, primary_chip, priority_chip,
          avatar_images, team_count, status_text, status_icon, action_icon,
-         full_content, attachments, view_count, like_count, is_public, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+         full_content, attachments, view_count, like_count, is_public, linked_idea_id, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
       [
         id,
         title,
@@ -433,6 +438,7 @@ router.post('/', authenticate, async (req, res, next) => {
         Number.isFinite(viewCount) ? viewCount : 0,
         Number.isFinite(likeCount) ? likeCount : 0,
         isPublic !== false,
+        normalizedLinkedIdeaId,
         req.user.id,
       ]
     );
@@ -506,7 +512,13 @@ router.put('/:id', authenticate, async (req, res, next) => {
       viewCount,
       likeCount,
       isPublic,
+      linkedIdeaId,
     } = req.body;
+
+    const normalizedLinkedIdeaId =
+      typeof linkedIdeaId === 'string' && linkedIdeaId.trim()
+        ? linkedIdeaId.trim()
+        : null;
 
     const result = await query(
       `UPDATE projects SET
@@ -526,8 +538,9 @@ router.put('/:id', authenticate, async (req, res, next) => {
         view_count = COALESCE($14, view_count),
         like_count = COALESCE($15, like_count),
         is_public = COALESCE($16, is_public),
+        linked_idea_id = COALESCE($17, linked_idea_id),
         updated_at = NOW()
-       WHERE id = $17 AND user_id = $18
+       WHERE id = $18 AND user_id = $19
        RETURNING id`,
       [
         title,
@@ -546,6 +559,7 @@ router.put('/:id', authenticate, async (req, res, next) => {
         Number.isFinite(viewCount) ? viewCount : null,
         Number.isFinite(likeCount) ? likeCount : null,
         typeof isPublic === 'boolean' ? isPublic : null,
+        normalizedLinkedIdeaId,
         req.params.id,
         req.user.id,
       ]
@@ -733,6 +747,7 @@ function mapProjectRow(row, currentUserId) {
     likeCount: Number(row.like_count_total || row.like_count || 0),
     isLiked: row.liked_by_me === true,
     isPublic: row.is_public !== false,
+    linkedIdeaId: row.linked_idea_id || null,
     canEdit: row.user_id === currentUserId,
   };
 }

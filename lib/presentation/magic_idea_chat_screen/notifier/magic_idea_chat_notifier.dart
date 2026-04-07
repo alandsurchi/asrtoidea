@@ -278,16 +278,41 @@ class MagicIdeaChatNotifier extends StateNotifier<MagicIdeaChatState> {
 
     try {
       createdIdea = await _ideaRepository.createIdea(ideaDraft);
-      _ref.read(ideasDashboardNotifier.notifier).insertGeneratedIdea(createdIdea);
     } catch (e) {
       ideaError = e.toString();
     }
 
     try {
-      createdProject = await _projectRepository.createProject(projectDraft);
-      _ref.read(projectExploreDashboardNotifier.notifier).insertGeneratedProject(createdProject);
+      final linkedProjectDraft = projectDraft.copyWith(
+        linkedIdeaId: (createdIdea?.id ?? '').trim(),
+      );
+      createdProject = await _projectRepository.createProject(linkedProjectDraft);
     } catch (e) {
       projectError = e.toString();
+    }
+
+    if (createdIdea != null && createdProject != null) {
+      final IdeaCardModel ideaForLinking = createdIdea;
+      final linkedProjectId = (createdProject.id ?? '').trim();
+      if (linkedProjectId.isNotEmpty) {
+        try {
+          createdIdea = await _ideaRepository.updateIdea(
+            ideaForLinking.copyWith(linkedProjectId: linkedProjectId),
+          );
+        } catch (_) {
+          createdIdea = ideaForLinking.copyWith(linkedProjectId: linkedProjectId);
+        }
+      }
+    }
+
+    if (createdIdea != null) {
+      _ref.read(ideasDashboardNotifier.notifier).insertGeneratedIdea(createdIdea);
+    }
+
+    if (createdProject != null) {
+      _ref
+          .read(projectExploreDashboardNotifier.notifier)
+          .insertGeneratedProject(createdProject);
     }
 
     if (!mounted) return false;
