@@ -44,6 +44,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\verify_railway_auth_explore.p
 
 If Explore is still not global, deploy the latest backend changes first, then rerun the script.
 
+### Railway Backend Deploy (Do this to avoid Flutter build errors)
+If Railway is connected to this repository root by mistake, it may try to build Flutter web for the backend service and fail.
+
+This repo now includes a root fallback (`railway.json` + `nixpacks.toml`) that runs backend commands, but you should still keep the Railway service root directory as `backend`.
+
+Recommended deploy command:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy_backend_railway.ps1
+```
+
+This script deploys from `backend/` and prints Railway service status afterward.
+
 ### Public Web Deployment (Free via Vercel)
 Frontend is now deployed publicly on Vercel.
 
