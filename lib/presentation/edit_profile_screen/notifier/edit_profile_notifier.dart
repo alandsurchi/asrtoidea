@@ -22,12 +22,15 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
   Future<void> initialize(SettingsModel? currentSettings) async {
     final current = state.editProfileModel ?? EditProfileModel();
+    final seededProfileImagePath = _sanitizeProfileImagePath(
+      currentSettings?.profileImagePath ?? current.profileImagePath,
+    );
+
     state = state.copyWith(
       editProfileModel: current.copyWith(
         fullName: currentSettings?.userName ?? current.fullName,
         email: currentSettings?.userEmail ?? current.email,
-        profileImagePath:
-            currentSettings?.profileImagePath ?? current.profileImagePath,
+        profileImagePath: seededProfileImagePath,
       ),
       isLoading: true,
       errorMessage: null,
@@ -35,11 +38,14 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
     try {
       final remote = await _repository.getUserProfile();
+      final remoteProfileImagePath = _sanitizeProfileImagePath(
+        remote.profileImagePath,
+      );
+
       state = state.copyWith(
         editProfileModel: (state.editProfileModel ?? EditProfileModel()).copyWith(
           id: remote.id,
-          profileImagePath:
-              remote.profileImagePath ?? currentSettings?.profileImagePath,
+          profileImagePath: remoteProfileImagePath ?? seededProfileImagePath,
           fullName: remote.name,
           nickName: remote.nickName ?? '',
           email: remote.email,
@@ -86,11 +92,14 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
     try {
       final model = state.editProfileModel;
+      final normalizedProfileImagePath = _sanitizeProfileImagePath(
+        model?.profileImagePath,
+      );
       final profile = UserProfile(
         id: model?.id ?? '',
         name: model?.fullName ?? '',
         email: model?.email ?? '',
-        profileImagePath: model?.profileImagePath,
+        profileImagePath: normalizedProfileImagePath,
         nickName: model?.nickName,
         phone: model?.phone,
         address: model?.address,
@@ -101,7 +110,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       state = state.copyWith(
         editProfileModel: (state.editProfileModel ?? EditProfileModel()).copyWith(
           id: updated.id,
-          profileImagePath: updated.profileImagePath,
+          profileImagePath: _sanitizeProfileImagePath(updated.profileImagePath),
           fullName: updated.name,
           nickName: updated.nickName ?? '',
           email: updated.email,
@@ -124,5 +133,24 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
             : 'Failed to save profile. Please try again.',
       );
     }
+  }
+
+  String? _sanitizeProfileImagePath(String? imagePath) {
+    final value = imagePath?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final legacyPlaceholders = <String>{
+      ImageConstant.imgUserProfilePhoto,
+      ImageConstant.imgImage,
+      ImageConstant.imgImage176x160,
+    };
+
+    if (legacyPlaceholders.contains(value)) {
+      return null;
+    }
+
+    return value;
   }
 }

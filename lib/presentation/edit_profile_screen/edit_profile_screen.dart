@@ -141,26 +141,15 @@ class EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             alignment: Alignment.topCenter,
             child: Container(
               margin: EdgeInsets.only(top: 20.h),
-              width: 184.h,
+              width: 176.h,
               height: 176.h,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CustomImageView(
-                    imagePath:
-                        state.editProfileModel?.profileImagePath ??
-                        ImageConstant.imgImage176x160,
-                    width: 160.h,
-                    height: 176.h,
-                    fit: BoxFit.cover,
-                  ),
-                  CustomImageView(
-                    imagePath: ImageConstant.imgImage,
-                    width: 184.h,
-                    height: 172.h,
-                    fit: BoxFit.cover,
-                  ),
-                ],
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE4E7EF), width: 2.h),
+                color: const Color(0xFFF4F6FB),
+              ),
+              child: ClipOval(
+                child: _buildProfileAvatar(state),
               ),
             ),
           ),
@@ -304,6 +293,63 @@ class EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildProfileAvatar(EditProfileState state) {
+    final imagePath = state.editProfileModel?.profileImagePath?.trim() ?? '';
+    if (imagePath.isNotEmpty) {
+      return CustomImageView(
+        imagePath: imagePath,
+        width: 176.h,
+        height: 176.h,
+        fit: BoxFit.cover,
+      );
+    }
+
+    final initials = _extractInitials(
+      state.editProfileModel?.fullName,
+      state.editProfileModel?.email,
+    );
+
+    return Container(
+      width: 176.h,
+      height: 176.h,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFDEE4FF), Color(0xFFC8D2FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Text(
+        initials,
+        style: TextStyleHelper.instance.headline24SemiBoldPoppins.copyWith(
+          color: const Color(0xFF1D2B53),
+        ),
+      ),
+    );
+  }
+
+  String _extractInitials(String? fullName, String? email) {
+    final name = fullName?.trim() ?? '';
+    if (name.isNotEmpty) {
+      final parts = name
+          .split(RegExp(r'\s+'))
+          .where((part) => part.isNotEmpty)
+          .toList();
+      if (parts.length >= 2) {
+        return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+      }
+      return parts.first[0].toUpperCase();
+    }
+
+    final trimmedEmail = email?.trim() ?? '';
+    if (trimmedEmail.isNotEmpty) {
+      return trimmedEmail[0].toUpperCase();
+    }
+
+    return '?';
   }
 
   String? _validateFullName(String? value) {

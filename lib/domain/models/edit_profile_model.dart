@@ -14,7 +14,7 @@ class EditProfileModel extends Equatable {
     this.job,
     this.id,
   }) {
-    profileImagePath = profileImagePath ?? ImageConstant.imgUserProfilePhoto;
+    profileImagePath = profileImagePath ?? "";
     fullName = fullName ?? "";
     nickName = nickName ?? "";
     email = email ?? "";

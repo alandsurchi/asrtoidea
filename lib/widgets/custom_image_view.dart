@@ -7,15 +7,34 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../core/app_export.dart';
 
 extension ImageTypeExtension on String {
+  bool get _isLikelyLocalFilePath {
+    if (startsWith('file://')) {
+      return true;
+    }
+    if (startsWith('/')) {
+      return true;
+    }
+    if (startsWith(r'\\')) {
+      return true;
+    }
+    if (RegExp(r'^[A-Za-z]:[\\/]').hasMatch(this)) {
+      return true;
+    }
+    final uri = Uri.tryParse(this);
+    return uri?.scheme == 'file';
+  }
+
   ImageType get imageType {
-    if (this.startsWith('http') || this.startsWith('https')) {
-      if (this.endsWith('.svg')) {
+    final normalizedPath = trim();
+
+    if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+      if (normalizedPath.toLowerCase().endsWith('.svg')) {
         return ImageType.networkSvg;
       }
       return ImageType.network;
-    } else if (this.endsWith('.svg')) {
+    } else if (normalizedPath.toLowerCase().endsWith('.svg')) {
       return ImageType.svg;
-    } else if (this.startsWith('file://')) {
+    } else if (normalizedPath._isLikelyLocalFilePath) {
       return ImageType.file;
     } else {
       return ImageType.png;
@@ -136,8 +155,11 @@ class CustomImageView extends StatelessWidget {
           ),
         );
       case ImageType.file:
+        final resolvedFilePath = _resolvedPath.startsWith('file://')
+            ? Uri.parse(_resolvedPath).toFilePath(windows: Platform.isWindows)
+            : _resolvedPath;
         return Image.file(
-          File(_resolvedPath),
+          File(resolvedFilePath),
           height: height,
           width: width,
           fit: fit ?? BoxFit.cover,

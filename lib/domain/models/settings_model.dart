@@ -15,7 +15,7 @@ class SettingsModel extends Equatable {
   }) {
     userName = userName ?? "Guest User";
     userEmail = userEmail ?? "Not signed in";
-    profileImagePath = profileImagePath ?? ImageConstant.imgUserProfilePhoto;
+    profileImagePath = profileImagePath ?? "";
     isDarkMode = isDarkMode ?? false;
     isLoading = isLoading ?? false;
     id = id ?? "";
@@ -91,7 +91,7 @@ class SettingsModel extends Equatable {
     id: '',
     userName: 'Guest User',
     userEmail: 'Not signed in',
-    profileImagePath: current?.profileImagePath ?? ImageConstant.imgUserProfilePhoto,
+    profileImagePath: current?.profileImagePath ?? '',
     isDarkMode: current?.isDarkMode ?? false,
     isLoading: false,
   );
