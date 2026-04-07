@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const logger = require('./logger');
 
 // Railway provides DATABASE_URL automatically when you link the Postgres service
 const pool = new Pool({
@@ -9,10 +10,12 @@ const pool = new Pool({
 async function testConnection() {
   try {
     const client = await pool.connect();
-    console.log('✅ Connected to PostgreSQL');
+    logger.info('Connected to PostgreSQL');
     client.release();
   } catch (err) {
-    console.error('❌ Database connection failed:', err.message);
+    logger.error('Database connection failed', {
+      error: err.message,
+    });
     process.exit(1);
   }
 }
@@ -23,7 +26,11 @@ async function query(text, params) {
   const res = await pool.query(text, params);
   const duration = Date.now() - start;
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`  [DB] ${text.substring(0, 60)}... (${duration}ms, ${res.rowCount} rows)`);
+    logger.info('Database query', {
+      durationMs: duration,
+      rowCount: res.rowCount,
+      queryPreview: text.substring(0, 80),
+    });
   }
   return res;
 }

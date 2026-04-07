@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const configuredSecret = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === 'production' && !configuredSecret) {
+  throw new Error('JWT_SECRET is required when NODE_ENV=production');
+}
+
+const JWT_SECRET = configuredSecret || 'dev-secret-local-only';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
 
 // Middleware: Verify JWT token
 function authenticate(req, res, next) {
@@ -32,7 +38,7 @@ function generateToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email },
     JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: JWT_EXPIRES_IN }
   );
 }
 

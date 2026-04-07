@@ -1,5 +1,7 @@
 import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:ai_idea_generator/domain/models/ideas_dashboard_model.dart';
+import 'package:ai_idea_generator/core/utils/detail_navigation_resolver.dart';
 
 import '../../core/app_export.dart';
 import '../main_shell_screen/main_shell_screen.dart';
@@ -486,7 +488,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
 
   Widget _buildCompactIdeaCard(
     BuildContext context,
-    dynamic idea,
+    IdeaCardModel idea,
     bool isDark,
     Color textColor,
     Color cardColor,
@@ -541,7 +543,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         child: Text(
-                          idea?.category ?? '',
+                          idea.category ?? '',
                           style: TextStyleHelper.instance.title12MediumPoppins
                               .copyWith(color: categoryTextColor),
                         ),
@@ -553,7 +555,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                           vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
-                          color: idea?.priority == 'High'
+                          color: idea.priority == 'High'
                               ? (isDark
                                     ? const Color(0xFF2A1515)
                                     : const Color(0xFFFFEEEE))
@@ -563,10 +565,10 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         child: Text(
-                          idea?.priority ?? '',
+                          idea.priority ?? '',
                           style: TextStyleHelper.instance.title12MediumPoppins
                               .copyWith(
-                                color: idea?.priority == 'High'
+                                color: idea.priority == 'High'
                                     ? const Color(0xFFFF3B30)
                                     : const Color(0xFFCC9300),
                               ),
@@ -576,7 +578,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    idea?.title ?? '',
+                    idea.title ?? '',
                     style: TextStyleHelper.instance.title14SemiBoldPoppins
                         .copyWith(color: textColor),
                     maxLines: 1,
@@ -584,7 +586,7 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    idea?.status ?? '',
+                    idea.status ?? '',
                     style: TextStyleHelper.instance.title12MediumPoppins
                         .copyWith(color: subTextColor),
                   ),
@@ -599,11 +601,11 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
   }
 
   Widget _buildIdeaThumbnail(
-    dynamic idea,
+    IdeaCardModel idea,
     Color fallbackColor,
     Color iconColor,
   ) {
-    final backgroundValue = (idea?.backgroundImage as String?)?.trim() ?? '';
+    final backgroundValue = (idea.backgroundImage ?? '').trim();
     final customColor = _parseCardColor(backgroundValue);
 
     if (customColor != null) {
@@ -833,20 +835,20 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
     );
   }
 
-  void _onTapIdeaCard(BuildContext context, [dynamic idea]) {
-    final ideaId = (idea?.id ?? '').toString().trim();
+  void _onTapIdeaCard(BuildContext context, [IdeaCardModel? idea]) {
+    if (idea == null) return;
+
+    final ideaId = (idea.id ?? '').trim();
     if (ideaId.isEmpty) return;
 
-    final linkedProjectId = (idea?.linkedProjectId ?? '').toString().trim();
-    final targetEntityType = linkedProjectId.isNotEmpty ? 'project' : 'idea';
-    final targetId = linkedProjectId.isNotEmpty ? linkedProjectId : ideaId;
+    final target = resolveIdeaDetailTarget(idea);
 
     Navigator.pushNamed(
       context,
       AppRoutes.ideaDetailView,
       arguments: {
-        'entityType': targetEntityType,
-        'id': targetId,
+        'entityType': target.entityType,
+        'id': target.id,
       },
     );
   }

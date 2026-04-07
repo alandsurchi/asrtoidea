@@ -1,0 +1,45 @@
+name: Post Deploy Verify
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verify-production:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Railway production verification
+        id: verify
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/verify_railway_auth_explore.ps1
+
+      - name: Write failure summary
+        if: steps.verify.outcome != 'success'
+        run: |
+          echo "## Production Verification Failed" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: $GITHUB_WORKFLOW" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: $GITHUB_SHA" >> $GITHUB_STEP_SUMMARY
+
+      - name: Optional webhook alert
+        if: steps.verify.outcome != 'success' && secrets.RAILWAY_ALERT_WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ secrets.RAILWAY_ALERT_WEBHOOK_URL }}
+        run: |
+          payload=$(printf '{"text":"Post-deploy verification failed for %s at commit %s. Run: %s/%s/actions/runs/%s"}' "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          curl -X POST -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
+
+      - name: Fail workflow on verification failure
+        if: steps.verify.outcome != 'success'
+        run: exit 1

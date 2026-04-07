@@ -56,6 +56,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy_backend_railway.ps1
 
 This script deploys from `backend/` and prints Railway service status afterward.
 
+### CI and Quality Gates
+The repository now includes GitHub Actions workflows:
+- `.github/workflows/ci.yml`
+  - Flutter analyze + tests
+  - Backend integration tests (Jest + Supertest + Postgres service)
+- `.github/workflows/post-deploy-verify.yml`
+  - Runs production verification script after successful CI on `main`
+  - Fails workflow and emits an optional webhook alert when verification fails
+
+In Railway production settings, enable **Wait for CI** so production deploys only start after CI passes.
+
+Optional: add GitHub Actions secret `RAILWAY_ALERT_WEBHOOK_URL` to send failure alerts to Slack/Discord/Teams-compatible incoming webhook endpoints.
+
 ### Public Web Deployment (Free via Vercel)
 Frontend is now deployed publicly on Vercel.
 
