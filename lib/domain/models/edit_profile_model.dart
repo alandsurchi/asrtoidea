@@ -15,12 +15,12 @@ class EditProfileModel extends Equatable {
     this.id,
   }) {
     profileImagePath = profileImagePath ?? ImageConstant.imgUserProfilePhoto;
-    fullName = fullName ?? "Aland Raed";
-    nickName = nickName ?? "Surchi";
-    email = email ?? "aland.raed.othman@gmail.com";
-    phone = phone ?? "+964 123456789";
-    address = address ?? "qadesya";
-    job = job ?? "Student";
+    fullName = fullName ?? "";
+    nickName = nickName ?? "";
+    email = email ?? "";
+    phone = phone ?? "";
+    address = address ?? "";
+    job = job ?? "";
     id = id ?? "";
   }
 

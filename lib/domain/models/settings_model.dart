@@ -13,8 +13,8 @@ class SettingsModel extends Equatable {
     this.isLoading,
     this.id,
   }) {
-    userName = userName ?? "Aland Raed";
-    userEmail = userEmail ?? "aland.raed.othman@gmail.com";
+    userName = userName ?? "Guest User";
+    userEmail = userEmail ?? "Not signed in";
     profileImagePath = profileImagePath ?? ImageConstant.imgUserProfilePhoto;
     isDarkMode = isDarkMode ?? false;
     isLoading = isLoading ?? false;
@@ -86,5 +86,14 @@ class SettingsModel extends Equatable {
         isDarkMode: current?.isDarkMode ?? false,
         isLoading: false,
       );
+
+  factory SettingsModel.guest({SettingsModel? current}) => SettingsModel(
+    id: '',
+    userName: 'Guest User',
+    userEmail: 'Not signed in',
+    profileImagePath: current?.profileImagePath ?? ImageConstant.imgUserProfilePhoto,
+    isDarkMode: current?.isDarkMode ?? false,
+    isLoading: false,
+  );
 }
 

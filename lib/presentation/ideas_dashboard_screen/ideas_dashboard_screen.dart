@@ -467,29 +467,11 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
-                child:
-                    (idea?.backgroundImage != null &&
-                        (idea.backgroundImage as String).isNotEmpty)
-                    ? Image.asset(
-                        idea.backgroundImage as String,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: thumbBgColor,
-                          child: Icon(
-                            Icons.lightbulb_outline,
-                            color: categoryTextColor,
-                            size: 28.h,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: thumbBgColor,
-                        child: Icon(
-                          Icons.lightbulb_outline,
-                          color: categoryTextColor,
-                          size: 28.h,
-                        ),
-                      ),
+                child: _buildIdeaThumbnail(
+                  idea,
+                  thumbBgColor,
+                  categoryTextColor,
+                ),
               ),
             ),
             SizedBox(width: 12.h),
@@ -564,6 +546,77 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildIdeaThumbnail(
+    dynamic idea,
+    Color fallbackColor,
+    Color iconColor,
+  ) {
+    final backgroundValue = (idea?.backgroundImage as String?)?.trim() ?? '';
+    final customColor = _parseCardColor(backgroundValue);
+
+    if (customColor != null) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _shiftColorLightness(customColor, 0.1),
+              _shiftColorLightness(customColor, -0.1),
+            ],
+          ),
+        ),
+        child: Icon(
+          Icons.lightbulb_outline,
+          color: Colors.white.withValues(alpha: 0.85),
+          size: 28.h,
+        ),
+      );
+    }
+
+    if (backgroundValue.isNotEmpty) {
+      return Image.asset(
+        backgroundValue,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: fallbackColor,
+          child: Icon(
+            Icons.lightbulb_outline,
+            color: iconColor,
+            size: 28.h,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      color: fallbackColor,
+      child: Icon(
+        Icons.lightbulb_outline,
+        color: iconColor,
+        size: 28.h,
+      ),
+    );
+  }
+
+  Color? _parseCardColor(String value) {
+    if (value.isEmpty) return null;
+
+    final normalized = value.toLowerCase().startsWith('color:')
+        ? value.substring('color:'.length)
+        : value;
+    final cleaned = normalized.trim().replaceAll('#', '');
+    if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(cleaned)) return null;
+    final full = 'FF${cleaned.toUpperCase()}';
+    return Color(int.parse(full, radix: 16));
+  }
+
+  Color _shiftColorLightness(Color color, double delta) {
+    final hsl = HSLColor.fromColor(color);
+    final adjusted = (hsl.lightness + delta).clamp(0.0, 1.0).toDouble();
+    return hsl.withLightness(adjusted).toColor();
   }
 
   void _onTapFilterButton(BuildContext context) {

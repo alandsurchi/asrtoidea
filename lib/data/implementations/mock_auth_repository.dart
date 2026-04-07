@@ -37,4 +37,28 @@ class MockAuthRepository implements AuthRepository {
     _currentProfile = profile;
     return _currentProfile;
   }
+
+  @override
+  Future<String> signIn(String email, String password) async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (email == 'error@test.com') {
+      throw Exception('Invalid credentials');
+    }
+    return 'mock_token_123';
+  }
+
+  @override
+  Future<String> signUp(String name, String email, String password) async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (email == 'error@test.com') {
+      throw Exception('Email already exists');
+    }
+    return 'mock_token_123';
+  }
+
+  @override
+  Future<void> signOut() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _currentProfile = UserProfile.guest();
+  }
 }

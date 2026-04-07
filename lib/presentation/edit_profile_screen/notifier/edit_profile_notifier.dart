@@ -20,15 +20,43 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
   EditProfileNotifier(EditProfileState state, this._repository) : super(state);
 
-  void initialize(SettingsModel? currentSettings) {
+  Future<void> initialize(SettingsModel? currentSettings) async {
+    final current = state.editProfileModel ?? EditProfileModel();
     state = state.copyWith(
-      editProfileModel: state.editProfileModel?.copyWith(
-        fullName: currentSettings?.userName ?? state.editProfileModel?.fullName,
-        email: currentSettings?.userEmail ?? state.editProfileModel?.email,
-        profileImagePath: currentSettings?.profileImagePath ?? state.editProfileModel?.profileImagePath,
+      editProfileModel: current.copyWith(
+        fullName: currentSettings?.userName ?? current.fullName,
+        email: currentSettings?.userEmail ?? current.email,
+        profileImagePath:
+            currentSettings?.profileImagePath ?? current.profileImagePath,
       ),
-      isLoading: false,
+      isLoading: true,
+      errorMessage: null,
     );
+
+    try {
+      final remote = await _repository.getUserProfile();
+      state = state.copyWith(
+        editProfileModel: (state.editProfileModel ?? EditProfileModel()).copyWith(
+          id: remote.id,
+          profileImagePath:
+              remote.profileImagePath ?? currentSettings?.profileImagePath,
+          fullName: remote.name,
+          nickName: remote.nickName ?? '',
+          email: remote.email,
+          phone: remote.phone ?? '',
+          address: remote.address ?? '',
+          job: remote.job ?? '',
+        ),
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().contains('Exception:')
+            ? e.toString().split('Exception: ').last
+            : null,
+      );
+    }
   }
 
   void updateFullName(String fullName) =>
@@ -59,7 +87,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     try {
       final model = state.editProfileModel;
       final profile = UserProfile(
-        id: '',
+        id: model?.id ?? '',
         name: model?.fullName ?? '',
         email: model?.email ?? '',
         profileImagePath: model?.profileImagePath,
@@ -69,8 +97,21 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         job: model?.job,
       );
 
-      await _repository.updateUserProfile(profile);
-      state = state.copyWith(isLoading: false, isSuccess: true);
+      final updated = await _repository.updateUserProfile(profile);
+      state = state.copyWith(
+        editProfileModel: (state.editProfileModel ?? EditProfileModel()).copyWith(
+          id: updated.id,
+          profileImagePath: updated.profileImagePath,
+          fullName: updated.name,
+          nickName: updated.nickName ?? '',
+          email: updated.email,
+          phone: updated.phone ?? '',
+          address: updated.address ?? '',
+          job: updated.job ?? '',
+        ),
+        isLoading: false,
+        isSuccess: true,
+      );
 
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) state = state.copyWith(isSuccess: false);

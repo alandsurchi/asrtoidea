@@ -2,15 +2,19 @@ import 'package:ai_idea_generator/domain/models/login_model.dart';
 import 'package:ai_idea_generator/core/utils/validators.dart';
 import 'package:ai_idea_generator/core/errors/app_exception.dart';
 import '../../../core/app_export.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../../services/local_storage_service.dart';
+import '../../../../domain/repositories/auth_repository.dart';
 
 part 'login_state.dart';
 
 final loginNotifier = StateNotifierProvider.autoDispose<LoginNotifier, LoginState>(
-  (ref) => LoginNotifier(LoginState(loginModel: LoginModel())),
+  (ref) => LoginNotifier(LoginState(loginModel: LoginModel()), ref.read(authRepositoryProvider)),
 );
 
 class LoginNotifier extends StateNotifier<LoginState> {
-  LoginNotifier(LoginState state) : super(state);
+  final AuthRepository _authRepository;
+  LoginNotifier(LoginState state, this._authRepository) : super(state);
 
   void updateUsername(String username) =>
       state = state.copyWith(loginModel: state.loginModel?.copyWith(username: username));
@@ -31,7 +35,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
     state = state.copyWith(isLoading: true, loginError: null);
     try {
-      await Future.delayed(const Duration(seconds: 2)); // TODO: replace with AuthRepository
+      final token = await _authRepository.signIn(username, password);
+      await LocalStorageService.deleteToken();
+      await LocalStorageService.clearAll();
+      await LocalStorageService.saveToken(token);
       state = state.copyWith(isLoading: false, isLoginSuccess: true, loginError: null);
     } catch (e) {
       state = state.copyWith(
@@ -45,8 +52,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, loginError: null);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(isLoading: false, isLoginSuccess: true);
+      await Future.delayed(const Duration(milliseconds: 400));
+      state = state.copyWith(
+        isLoading: false,
+        isLoginSuccess: false,
+        loginError:
+            'Google sign-in is not connected yet. Please use email or username login.',
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -58,8 +70,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
   Future<void> signInWithApple() async {
     state = state.copyWith(isLoading: true, loginError: null);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(isLoading: false, isLoginSuccess: true);
+      await Future.delayed(const Duration(milliseconds: 400));
+      state = state.copyWith(
+        isLoading: false,
+        isLoginSuccess: false,
+        loginError:
+            'Apple sign-in is not connected yet. Please use email or username login.',
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -71,8 +88,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
   Future<void> signInWithFacebook() async {
     state = state.copyWith(isLoading: true, loginError: null);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(isLoading: false, isLoginSuccess: true);
+      await Future.delayed(const Duration(milliseconds: 400));
+      state = state.copyWith(
+        isLoading: false,
+        isLoginSuccess: false,
+        loginError:
+            'Facebook sign-in is not connected yet. Please use email or username login.',
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

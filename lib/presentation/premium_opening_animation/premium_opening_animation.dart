@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../routes/app_routes.dart';
+import '../../services/local_storage_service.dart';
+import '../../data/network/api_client.dart';
+import '../../core/errors/app_exception.dart';
 
 class PremiumOpeningAnimation extends StatefulWidget {
   const PremiumOpeningAnimation({Key? key}) : super(key: key);
@@ -121,10 +124,34 @@ class _PremiumOpeningAnimationState extends State<PremiumOpeningAnimation>
     _taglineController.stop();
     _exitController.stop();
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.ideaGenerationOnboardingScreen,
-    );
+    final nextRoute = await _resolveInitialRoute();
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(context, nextRoute);
+  }
+
+  Future<String> _resolveInitialRoute() async {
+    final token = await LocalStorageService.loadToken();
+    final hasToken = token != null && token.trim().isNotEmpty;
+
+    if (!hasToken) {
+      return AppRoutes.ideaGenerationOnboardingScreen;
+    }
+
+    try {
+      // Quick token validation for smoother app relaunches.
+      await HttpApiClient().get('/auth/profile');
+      return AppRoutes.mainShellScreen;
+    } on AuthException {
+      await LocalStorageService.deleteToken();
+      await LocalStorageService.clearAll();
+      return AppRoutes.ideaGenerationOnboardingScreen;
+    } on NetworkException {
+      // If backend is unreachable, keep user in-app and rely on local cache.
+      return AppRoutes.mainShellScreen;
+    } catch (_) {
+      return AppRoutes.mainShellScreen;
+    }
   }
 
   void _startTypewriter() {

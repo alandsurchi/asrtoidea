@@ -4,14 +4,11 @@ import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/ai_repository.dart';
-import '../../data/implementations/mock_idea_repository.dart';
-import '../../data/implementations/mock_project_repository.dart';
-import '../../data/implementations/mock_auth_repository.dart';
-import '../../data/implementations/mock_ai_repository.dart';
 import '../../data/network/api_client.dart';
 import '../../data/implementations/api_project_repository.dart';
 import '../../data/implementations/api_auth_repository.dart';
 import '../../data/implementations/api_idea_repository.dart';
+import '../../data/implementations/api_ai_repository.dart';
 
 /// ─── Dependency Injection ────────────────────────────────────────────────────
 ///
@@ -48,5 +45,5 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 /// Provides the [AiRepository] implementation currently in use.
 final aiRepositoryProvider = Provider<AiRepository>(
-  (ref) => MockAiRepository(),
+  (ref) => ApiAiRepository(),
 );

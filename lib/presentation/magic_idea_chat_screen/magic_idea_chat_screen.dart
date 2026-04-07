@@ -6,6 +6,8 @@ import '../../core/app_export.dart';
 import 'package:ai_idea_generator/domain/models/magic_idea_chat_model.dart';
 import './widgets/chat_item_widget.dart';
 import 'notifier/magic_idea_chat_notifier.dart';
+import 'active_chat_screen.dart';
+import 'ai_models.dart';
 
 class MagicIdeaChatScreen extends ConsumerStatefulWidget {
   const MagicIdeaChatScreen({Key? key}) : super(key: key);
@@ -17,35 +19,6 @@ class MagicIdeaChatScreen extends ConsumerStatefulWidget {
 class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController messageController = TextEditingController();
-
-  String _selectedModel = 'Gemini';
-
-  final List<Map<String, dynamic>> _aiModels = [
-    {
-      'name': 'Gemini',
-      'label': 'Gemini',
-      'color': const Color(0xFF1D00FF),
-      'icon': Icons.auto_awesome,
-    },
-    {
-      'name': 'GPT-4',
-      'label': 'GPT-4',
-      'color': const Color(0xFF10A37F),
-      'icon': Icons.psychology_rounded,
-    },
-    {
-      'name': 'Claude',
-      'label': 'Claude',
-      'color': const Color(0xFFD97706),
-      'icon': Icons.smart_toy_rounded,
-    },
-    {
-      'name': 'Perplexity',
-      'label': 'Perplexity',
-      'color': const Color(0xFF20B2AA),
-      'icon': Icons.search_rounded,
-    },
-  ];
 
   @override
   void initState() {
@@ -61,6 +34,8 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedModel =
+        ref.watch(magicIdeaChatNotifier).selectedAiModel ?? kDefaultAiModel;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -92,7 +67,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                   SizedBox(height: 20.h),
                   _buildNewChatButton(context),
                   SizedBox(height: 14.h),
-                  _buildChatCard(context),
+                  _buildChatCard(context, selectedModel),
                   SizedBox(height: 24.h),
                   _buildPreviousChatsSection(context),
                   SizedBox(height: 120.h),
@@ -214,7 +189,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
     );
   }
 
-  Widget _buildChatCard(BuildContext context) {
+  Widget _buildChatCard(BuildContext context, String selectedModel) {
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -224,12 +199,15 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
         borderRadius: BorderRadius.circular(24.0),
       ),
       child: Column(
-        children: [_buildChatCardHeader(context), _buildChatInputArea(context)],
+        children: [
+          _buildChatCardHeader(context, selectedModel),
+          _buildChatInputArea(context),
+        ],
       ),
     );
   }
 
-  Widget _buildChatCardHeader(BuildContext context) {
+  Widget _buildChatCardHeader(BuildContext context, String selectedModel) {
     final bool isRtl = Directionality.of(context) == TextDirection.rtl;
     final loc = AppLocalizations.of(context)!;
     return Padding(
@@ -272,22 +250,23 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                         : TextDirection.ltr,
                     children: [
                       Icon(
-                        _aiModels.firstWhere(
-                              (m) => m['name'] == _selectedModel,
-                              orElse: () => _aiModels[0],
-                            )['icon']
-                            as IconData,
+                        kAiModels
+                            .firstWhere(
+                              (m) => m.name == selectedModel,
+                              orElse: () => kAiModels.first,
+                            )
+                            .icon,
                         size: 14.h,
-                        color:
-                            _aiModels.firstWhere(
-                                  (m) => m['name'] == _selectedModel,
-                                  orElse: () => _aiModels[0],
-                                )['color']
-                                as Color,
+                        color: kAiModels
+                            .firstWhere(
+                              (m) => m.name == selectedModel,
+                              orElse: () => kAiModels.first,
+                            )
+                            .color,
                       ),
                       SizedBox(width: 5.h),
                       Text(
-                        _selectedModel,
+                        selectedModel,
                         style: TextStyleHelper.instance.title13MediumPoppins
                             .copyWith(
                               color: const Color(0xFF000000),
@@ -391,24 +370,24 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                 ),
               ),
               SizedBox(height: 16.h),
-              ..._aiModels.map((model) {
-                final bool isSelected = _selectedModel == model['name'];
+              ...kAiModels.map((model) {
+                final notifierState = ref.read(magicIdeaChatNotifier);
+                final currentModel =
+                    notifierState.selectedAiModel ?? kDefaultAiModel;
+                final bool isSelected = currentModel == model.name;
                 final cardBg = isSelected
-                    ? (model['color'] as Color).withAlpha(20)
+                    ? model.color.withAlpha(20)
                     : (isDark
                           ? const Color(0xFF2A2A3E)
                           : const Color(0xFFF8F8F8));
                 final cardBorder = isSelected
-                    ? (model['color'] as Color)
+                    ? model.color
                     : (isDark
                           ? const Color(0xFF3A3A5E)
                           : const Color(0xFFE8E8E8));
                 return GestureDetector(
                   onTap: () {
-                    final selectedName = model['name'] as String;
-                    setState(() {
-                      _selectedModel = selectedName;
-                    });
+                    final selectedName = model.name;
                     ref.read(magicIdeaChatNotifier.notifier).updateAiModel(selectedName);
                     Navigator.pop(ctx);
                   },
@@ -432,12 +411,12 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                           width: 40.h,
                           height: 40.h,
                           decoration: BoxDecoration(
-                            color: (model['color'] as Color).withAlpha(25),
+                            color: model.color.withAlpha(25),
                             borderRadius: BorderRadius.circular(10.0),
                           ),
                           child: Icon(
-                            model['icon'] as IconData,
-                            color: model['color'] as Color,
+                            model.icon,
+                            color: model.color,
                             size: 22.h,
                           ),
                         ),
@@ -447,7 +426,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                model['label'] as String,
+                                model.label,
                                 style: TextStyleHelper
                                     .instance
                                     .title14SemiBoldPoppins
@@ -458,7 +437,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                                     ),
                               ),
                               Text(
-                                _modelDescription(model['name'] as String, loc),
+                                _modelDescription(model.name, loc),
                                 style: TextStyleHelper
                                     .instance
                                     .title13LightPoppins
@@ -470,7 +449,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                         if (isSelected)
                           Icon(
                             Icons.check_circle_rounded,
-                            color: model['color'] as Color,
+                            color: model.color,
                             size: 20.h,
                           ),
                       ],
@@ -493,6 +472,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
         return loc.gpt4Desc;
       case 'Claude':
         return loc.claudeDesc;
+      case 'Mercury':
       case 'Perplexity':
         return loc.perplexityDesc;
       default:
@@ -612,7 +592,7 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        loc.save,
+                        'Send',
                         style: TextStyleHelper.instance.title13SemiBoldPoppins
                             .copyWith(color: const Color(0xFF6A59F1)),
                       ),
@@ -710,23 +690,21 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
       );
       return;
     }
-    _onSendMessage();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            ),
-            const SizedBox(width: 8),
-            Text('Generating idea with $_selectedModel...'),
-          ],
-        ),
-        backgroundColor: const Color(0xFF6A59F1),
-        duration: const Duration(seconds: 2),
-      ),
+    
+    // Start a message and navigate to the new chat screen
+    ref.read(magicIdeaChatNotifier.notifier).sendMessage(messageController.text);
+    messageController.clear();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ActiveChatScreen()),
+    );
+  }
+
+  void _onChatItemTap(String chatId) {
+    ref.read(magicIdeaChatNotifier.notifier).selectChat(chatId);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ActiveChatScreen()),
     );
   }
 
@@ -736,6 +714,10 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
           .read(magicIdeaChatNotifier.notifier)
           .sendMessage(messageController.text);
       messageController.clear();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ActiveChatScreen()),
+      );
     }
   }
 
@@ -840,323 +822,4 @@ class MagicIdeaChatScreenState extends ConsumerState<MagicIdeaChatScreen> {
     }
   }
 
-  void _onChatItemTap(String chatId) {
-    ref.read(magicIdeaChatNotifier.notifier).selectChat(chatId);
-    final state = ref.read(magicIdeaChatNotifier);
-    final chat = state.chatHistory?.firstWhere(
-      (c) => c.id == chatId,
-      orElse: () => MagicIdeaChatModel(title: 'Chat', description: ''),
-    );
-    if (chat == null) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        builder: (_, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEBEBFF),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.auto_awesome,
-                            color: Color(0xFF1D00FF),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                chat.title ?? 'Chat',
-                                style: TextStyleHelper
-                                    .instance
-                                    .title16SemiBoldPoppins
-                                    .copyWith(color: const Color(0xFF000000)),
-                              ),
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (chat.statusColor ??
-                                              const Color(0xFFFBD060))
-                                          .withAlpha(30),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  chat.status ?? 'Processing',
-                                  style: TextStyleHelper
-                                      .instance
-                                      .title12MediumPoppins
-                                      .copyWith(
-                                        color:
-                                            chat.statusColor ??
-                                            const Color(0xFFFBD060),
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(
-                            Icons.close,
-                            color: Color(0xFF888888),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F8FF),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEBEBFF)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Your Idea',
-                            style: TextStyleHelper
-                                .instance
-                                .title13SemiBoldPoppins
-                                .copyWith(color: const Color(0xFF888888)),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            chat.description ?? '',
-                            style: TextStyleHelper.instance.title14MediumSans
-                                .copyWith(color: const Color(0xFF000000)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1D00FF), Color(0xFF6A59F1)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'AI Response',
-                                style: TextStyleHelper
-                                    .instance
-                                    .title13SemiBoldPoppins
-                                    .copyWith(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          if (chat.status == "Thinking..." || chat.status == "Processing..." || chat.status == "Listening...")
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Generating response...',
-                                  style: TextStyleHelper.instance.title13LightPoppins.copyWith(color: Colors.white, fontStyle: FontStyle.italic),
-                                )
-                              ],
-                            )
-                          else if (chat.status == "Failed")
-                            Text(
-                              chat.errorMessage ?? 'Something went wrong.',
-                              style: TextStyleHelper.instance.title13MediumPoppins.copyWith(color: const Color(0xFFFFB3B3)),
-                            )
-                          else
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (chat.aiModelUsed != null)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withAlpha(40),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'Generated by ${chat.aiModelUsed}',
-                                      style: TextStyleHelper.instance.title12MediumPoppins.copyWith(color: Colors.white),
-                                    ),
-                                  ),
-                                Text(
-                                  chat.aiResponse ?? 'No response generated.',
-                                  style: TextStyleHelper.instance.title13LightPoppins.copyWith(
-                                    color: Colors.white.withAlpha(240),
-                                    height: 1.6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Idea saved!'),
-                                  backgroundColor: Color(0xFF1DE4A2),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1D00FF),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.bookmark_outline,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Save Idea',
-                                    style: TextStyleHelper
-                                        .instance
-                                        .title13SemiBoldPoppins
-                                        .copyWith(color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Continue in new chat'),
-                                  backgroundColor: Color(0xFF6A59F1),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0F0FF),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFF1D00FF).withAlpha(60),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.chat_bubble_outline,
-                                    color: Color(0xFF1D00FF),
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Continue',
-                                    style: TextStyleHelper
-                                        .instance
-                                        .title13SemiBoldPoppins
-                                        .copyWith(
-                                          color: const Color(0xFF1D00FF),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -60,6 +60,24 @@ class IdeasDashboardNotifier extends StateNotifier<IdeasDashboardState> {
     state = state.copyWith(showFilterOptions: !(state.showFilterOptions ?? false));
   }
 
+  void insertGeneratedIdea(IdeaCardModel idea) {
+    final currentModel = state.ideasDashboardModel ?? IdeasDashboardModel();
+    final allIdeas = List<IdeaCardModel>.from(currentModel.allIdeasList ?? []);
+
+    allIdeas.removeWhere((item) => item.id == idea.id);
+    allIdeas.insert(0, idea);
+
+    state = state.copyWith(
+      selectedFilterIndex: 0,
+      searchQuery: '',
+      ideasDashboardModel: currentModel.copyWith(
+        ideaCardsList: allIdeas,
+        allIdeasList: allIdeas,
+      ),
+    );
+    _applyFilters();
+  }
+
   void _applyFilters() {
     final query = (state.searchQuery ?? '').toLowerCase();
     final targetStatus = FilterUtils.statusForTabIndex(state.selectedFilterIndex ?? 0);

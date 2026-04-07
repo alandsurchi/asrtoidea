@@ -30,19 +30,28 @@ class EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settingsState = ref.read(settingsNotifier);
-      ref.read(editProfileNotifier.notifier).initialize(settingsState.settingsModel);
-
-      // Populate controllers from the freshly initialized state
-      final profileState = ref.read(editProfileNotifier);
-      final model = profileState.editProfileModel;
-      _fullNameController.text = model?.fullName ?? '';
-      _nickNameController.text = model?.nickName ?? '';
-      _emailController.text = model?.email ?? '';
-      _phoneController.text = model?.phone ?? '';
-      _addressController.text = model?.address ?? '';
-      _jobController.text = model?.job ?? '';
+      _initializeProfile();
     });
+  }
+
+  Future<void> _initializeProfile() async {
+    final settingsState = ref.read(settingsNotifier);
+    await ref
+        .read(editProfileNotifier.notifier)
+        .initialize(settingsState.settingsModel);
+    if (!mounted) return;
+    _syncControllersFromState();
+  }
+
+  void _syncControllersFromState() {
+    final profileState = ref.read(editProfileNotifier);
+    final model = profileState.editProfileModel;
+    _fullNameController.text = model?.fullName ?? '';
+    _nickNameController.text = model?.nickName ?? '';
+    _emailController.text = model?.email ?? '';
+    _phoneController.text = model?.phone ?? '';
+    _addressController.text = model?.address ?? '';
+    _jobController.text = model?.job ?? '';
   }
 
   @override
@@ -70,15 +79,8 @@ class EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
               ref.listen(editProfileNotifier, (previous, current) {
                 if (current.isSuccess == true && previous?.isSuccess != true) {
-                  ref.read(settingsNotifier.notifier).updateProfile(
-                    current.editProfileModel?.fullName ?? '',
-                    current.editProfileModel?.email ?? '',
-                  );
-                  if (current.editProfileModel?.profileImagePath != null) {
-                    ref.read(settingsNotifier.notifier).updateProfileImage(
-                      current.editProfileModel!.profileImagePath!,
-                    );
-                  }
+                  _syncControllersFromState();
+                  ref.read(settingsNotifier.notifier).reloadProfile();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Profile updated successfully'),

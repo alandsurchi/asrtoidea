@@ -200,7 +200,7 @@ class ProjectExploreDashboardScreenState
               final projectModel = projects[index];
               return CustomTaskCard(
                 title: projectModel.title ?? '',
-                description: projectModel.description ?? '',
+                description: _withCreator(projectModel),
                 backgroundImage: projectModel.backgroundImage ?? '',
                 primaryChip: projectModel.primaryChip,
                 priorityChip: projectModel.priorityChip,
@@ -217,6 +217,15 @@ class ProjectExploreDashboardScreenState
         },
       ),
     );
+  }
+
+  String _withCreator(ProjectCardModel projectModel) {
+    final author = (projectModel.createdByName ?? '').trim();
+    final description = (projectModel.description ?? '').trim();
+
+    if (author.isEmpty) return description;
+    if (description.isEmpty) return 'By $author';
+    return 'By $author\n$description';
   }
 
   void onTapEditIcon(BuildContext context) {

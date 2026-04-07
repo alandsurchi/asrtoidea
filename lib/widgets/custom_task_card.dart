@@ -58,6 +58,9 @@ class CustomTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColor = _tryParseBackgroundColor(backgroundImage);
+    final assetBackground = _resolveBackgroundAsset(backgroundImage);
+
     return Container(
       width: width ?? 400.h,
       height: height ?? 250.h,
@@ -68,10 +71,22 @@ class CustomTaskCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.h),
-            image: DecorationImage(
-              image: AssetImage(backgroundImage),
-              fit: BoxFit.cover,
-            ),
+            gradient: customColor != null
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _shiftColorLightness(customColor, 0.09),
+                      _shiftColorLightness(customColor, -0.11),
+                    ],
+                  )
+                : null,
+            image: customColor == null
+                ? DecorationImage(
+                    image: AssetImage(assetBackground),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
           child: Container(
             padding: EdgeInsets.all(20.h),
@@ -102,6 +117,42 @@ class CustomTaskCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _resolveBackgroundAsset(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return ImageConstant.imgRectangle29250x400;
+    if (normalized.toLowerCase().startsWith('color:')) {
+      return ImageConstant.imgRectangle29250x400;
+    }
+    if (_parseHexColor(normalized) != null) {
+      return ImageConstant.imgRectangle29250x400;
+    }
+    return normalized;
+  }
+
+  Color? _tryParseBackgroundColor(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return null;
+
+    if (normalized.toLowerCase().startsWith('color:')) {
+      return _parseHexColor(normalized.substring('color:'.length));
+    }
+
+    return _parseHexColor(normalized);
+  }
+
+  Color? _parseHexColor(String value) {
+    final cleaned = value.trim().replaceAll('#', '');
+    if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(cleaned)) return null;
+    final full = 'FF${cleaned.toUpperCase()}';
+    return Color(int.parse(full, radix: 16));
+  }
+
+  Color _shiftColorLightness(Color color, double delta) {
+    final hsl = HSLColor.fromColor(color);
+    final adjusted = (hsl.lightness + delta).clamp(0.0, 1.0).toDouble();
+    return hsl.withLightness(adjusted).toColor();
   }
 
   Widget _buildChipRow() {

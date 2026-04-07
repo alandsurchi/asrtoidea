@@ -63,6 +63,26 @@ class ProjectExploreDashboardNotifier
     _applyFilters();
   }
 
+  void insertGeneratedProject(ProjectCardModel project) {
+    final currentModel =
+        state.projectExploreDashboardModel ?? ProjectExploreDashboardModel();
+    final allCards =
+        List<ProjectCardModel>.from(currentModel.allProjectCards ?? []);
+
+    allCards.removeWhere((item) => item.id == project.id);
+    allCards.insert(0, project);
+
+    state = state.copyWith(
+      selectedTabIndex: 0,
+      searchQuery: '',
+      projectExploreDashboardModel: currentModel.copyWith(
+        projectCards: allCards,
+        allProjectCards: allCards,
+      ),
+    );
+    _applyFilters();
+  }
+
   void _applyFilters() {
     final query = (state.searchQuery ?? '').toLowerCase();
     final targetStatus = FilterUtils.statusForTabIndex(state.selectedTabIndex ?? 0);

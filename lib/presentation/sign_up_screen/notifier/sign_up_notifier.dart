@@ -2,15 +2,19 @@ import 'package:ai_idea_generator/domain/models/sign_up_model.dart';
 import 'package:ai_idea_generator/core/utils/validators.dart';
 import 'package:ai_idea_generator/core/errors/app_exception.dart';
 import '../../../core/app_export.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../../services/local_storage_service.dart';
+import '../../../../domain/repositories/auth_repository.dart';
 
 part 'sign_up_state.dart';
 
 final signUpNotifier = StateNotifierProvider.autoDispose<SignUpNotifier, SignUpState>(
-  (ref) => SignUpNotifier(SignUpState(signUpModel: SignUpModel())),
+  (ref) => SignUpNotifier(SignUpState(signUpModel: SignUpModel()), ref.read(authRepositoryProvider)),
 );
 
 class SignUpNotifier extends StateNotifier<SignUpState> {
-  SignUpNotifier(SignUpState state) : super(state);
+  final AuthRepository _authRepository;
+  SignUpNotifier(SignUpState state, this._authRepository) : super(state);
 
   void updateEmail(String email) =>
       state = state.copyWith(signUpModel: state.signUpModel?.copyWith(email: email));
@@ -35,7 +39,10 @@ class SignUpNotifier extends StateNotifier<SignUpState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await Future.delayed(const Duration(seconds: 2)); // TODO: replace with AuthRepository
+      final token = await _authRepository.signUp(name, email, password);
+      await LocalStorageService.deleteToken();
+      await LocalStorageService.clearAll();
+      await LocalStorageService.saveToken(token);
       state = state.copyWith(isLoading: false, isSuccess: true);
     } catch (e) {
       state = state.copyWith(

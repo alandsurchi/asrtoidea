@@ -11,8 +11,8 @@ import '../../data/repositories/mock_repository.dart';
 /// Replace with [GeminiAiRepository] or [OpenAIRepository] when ready.
 class MockAiRepository implements AiRepository {
   @override
-  Future<String> generateResponse(String prompt, String modelName) {
-    return MockAIService.generateMockResponse(prompt, modelName);
+  Future<String> generateResponse(List<ChatMessage> history, String modelName) {
+    return MockAIService.generateMockResponse(history.last.text, modelName);
   }
 
   @override

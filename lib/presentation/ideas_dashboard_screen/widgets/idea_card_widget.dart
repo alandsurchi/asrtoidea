@@ -13,6 +13,10 @@ class IdeaCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    final backgroundSpec = idea?.backgroundImage ?? '';
+    final customColor = _tryParseBackgroundColor(backgroundSpec);
+    final assetBackground = _resolveBackgroundAsset(backgroundSpec);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -21,10 +25,22 @@ class IdeaCardWidget extends StatelessWidget {
         padding: EdgeInsets.all(20.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.h),
-          image: DecorationImage(
-            image: AssetImage(idea?.backgroundImage ?? ''),
-            fit: BoxFit.cover,
-          ),
+          gradient: customColor != null
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _shiftColorLightness(customColor, 0.08),
+                    _shiftColorLightness(customColor, -0.12),
+                  ],
+                )
+              : null,
+          image: customColor == null
+              ? DecorationImage(
+                  image: AssetImage(assetBackground),
+                  fit: BoxFit.cover,
+                )
+              : null,
         ),
         child: Column(
           crossAxisAlignment: isRtl
@@ -42,6 +58,42 @@ class IdeaCardWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _resolveBackgroundAsset(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return ImageConstant.imgRectangle29250x400;
+    if (normalized.toLowerCase().startsWith('color:')) {
+      return ImageConstant.imgRectangle29250x400;
+    }
+    if (_parseHexColor(normalized) != null) {
+      return ImageConstant.imgRectangle29250x400;
+    }
+    return normalized;
+  }
+
+  Color? _tryParseBackgroundColor(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return null;
+
+    if (normalized.toLowerCase().startsWith('color:')) {
+      return _parseHexColor(normalized.substring('color:'.length));
+    }
+
+    return _parseHexColor(normalized);
+  }
+
+  Color? _parseHexColor(String value) {
+    final cleaned = value.trim().replaceAll('#', '');
+    if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(cleaned)) return null;
+    final full = 'FF${cleaned.toUpperCase()}';
+    return Color(int.parse(full, radix: 16));
+  }
+
+  Color _shiftColorLightness(Color color, double delta) {
+    final hsl = HSLColor.fromColor(color);
+    final adjusted = (hsl.lightness + delta).clamp(0.0, 1.0).toDouble();
+    return hsl.withLightness(adjusted).toColor();
   }
 
   Widget _buildCategoryAndPriorityRow(BuildContext context, bool isRtl) {

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/errors/app_exception.dart';
 import '../../core/config/env_config.dart';
+import '../../services/local_storage_service.dart';
 
 /// Abstract HTTP client contract.
 ///
@@ -43,20 +44,28 @@ class TimeoutExceptionLocal extends AppException {
 /// Real HTTP implementation (ready for Railway).
 class HttpApiClient implements ApiClient {
   final String _baseUrl;
-  // TODO: Authentication Readiness - Inject real auth token or a TokenProvider here
-  final String? _authToken;
+  final String? _authTokenOverride;
   final http.Client _client;
 
   HttpApiClient({String? baseUrl, String? authToken, http.Client? client})
       : _baseUrl = baseUrl ?? EnvConfig.baseUrl,
-        _authToken = authToken,
+        _authTokenOverride = authToken,
         _client = client ?? http.Client();
 
-  Map<String, String> _defaultHeaders() => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-      };
+  Future<Map<String, String>> _defaultHeaders({
+    Map<String, String>? extra,
+    bool includeJsonContentType = true,
+  }) async {
+    final storedToken = _authTokenOverride ?? await LocalStorageService.loadToken();
+    final token = storedToken?.trim();
+
+    return {
+      if (includeJsonContentType) 'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      ...?extra,
+    };
+  }
 
   Duration get _timeout => Duration(seconds: EnvConfig.requestTimeoutSeconds);
 
@@ -113,9 +122,10 @@ class HttpApiClient implements ApiClient {
   @override
   Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers}) async {
     _log('GET $_baseUrl$path');
+    final resolvedHeaders = await _defaultHeaders(extra: headers);
     final response = await _executeWithRetry(() => _client.get(
           Uri.parse('$_baseUrl$path'),
-          headers: {..._defaultHeaders(), ...?headers},
+          headers: resolvedHeaders,
         ));
     return _handleResponse(response);
   }
@@ -127,9 +137,10 @@ class HttpApiClient implements ApiClient {
     Map<String, String>? headers,
   }) async {
     _log('POST $_baseUrl$path');
+    final resolvedHeaders = await _defaultHeaders(extra: headers);
     final response = await _executeWithRetry(() => _client.post(
           Uri.parse('$_baseUrl$path'),
-          headers: {..._defaultHeaders(), ...?headers},
+          headers: resolvedHeaders,
           body: body != null ? jsonEncode(body) : null,
         ));
     return _handleResponse(response);
@@ -142,9 +153,10 @@ class HttpApiClient implements ApiClient {
     Map<String, String>? headers,
   }) async {
     _log('PUT $_baseUrl$path');
+    final resolvedHeaders = await _defaultHeaders(extra: headers);
     final response = await _executeWithRetry(() => _client.put(
           Uri.parse('$_baseUrl$path'),
-          headers: {..._defaultHeaders(), ...?headers},
+          headers: resolvedHeaders,
           body: body != null ? jsonEncode(body) : null,
         ));
     return _handleResponse(response);
@@ -153,9 +165,10 @@ class HttpApiClient implements ApiClient {
   @override
   Future<void> delete(String path, {Map<String, String>? headers}) async {
     _log('DELETE $_baseUrl$path');
+    final resolvedHeaders = await _defaultHeaders(extra: headers);
     final response = await _executeWithRetry(() => _client.delete(
           Uri.parse('$_baseUrl$path'),
-          headers: {..._defaultHeaders(), ...?headers},
+          headers: resolvedHeaders,
         ));
     await _handleResponse(response);
   }
@@ -171,8 +184,12 @@ class HttpApiClient implements ApiClient {
     _log('MULTIPART $_baseUrl$path');
     return await _executeWithRetry(() async {
       final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl$path'));
-      
-      request.headers.addAll({..._defaultHeaders(), ...?headers});
+
+      final resolvedHeaders = await _defaultHeaders(
+        extra: headers,
+        includeJsonContentType: false,
+      );
+      request.headers.addAll(resolvedHeaders);
       
       if (fields != null) {
         request.fields.addAll(fields);

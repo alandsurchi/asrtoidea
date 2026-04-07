@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/custom_switch.dart';
+import '../../services/local_storage_service.dart';
 import './notifier/settings_notifier.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -1199,8 +1200,10 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              await LocalStorageService.deleteToken();
+              await LocalStorageService.clearAll();
               NavigatorService.pushNamedAndRemoveUntil(AppRoutes.welcomeScreen);
             },
             style: ElevatedButton.styleFrom(

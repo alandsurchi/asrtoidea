@@ -5,6 +5,9 @@ abstract class ProjectRepository {
   /// Returns all project cards.
   Future<List<ProjectCardModel>> getProjects();
 
+  /// Creates a new project card and returns the persisted record.
+  Future<ProjectCardModel> createProject(ProjectCardModel project);
+
   /// Toggles the saved state of project [projectId].
   Future<ProjectCardModel> toggleSave(String projectId, bool isSaved);
 

@@ -172,7 +172,7 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                     : CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Username",
+                    "Email or Username",
                     textDirection: isRtl
                         ? TextDirection.rtl
                         : TextDirection.ltr,
@@ -182,10 +182,11 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                   SizedBox(height: 8.h),
                   _buildTextField(
                     controller: _usernameController,
-                    hintText: "Username",
+                    hintText: "Email or Username",
                     leftIcon: ImageConstant.imgVector,
                     keyboardType: TextInputType.text,
-                    validator: (value) => Validators.required(value, label: 'Username'),
+                    validator: (value) =>
+                      Validators.required(value, label: 'Email or username'),
                     onChanged: (value) =>
                         ref.read(loginNotifier.notifier).updateUsername(value),
                   ),

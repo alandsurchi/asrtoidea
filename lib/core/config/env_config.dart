@@ -31,4 +31,37 @@ class EnvConfig {
     }
     return 30;
   }
+
+  static String? _clean(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  /// Google Gemini API key.
+  static String? get geminiApiKey => _clean(dotenv.env['GEMINI_API_KEY']);
+
+  /// Mercury provider API key.
+  static String? get mercuryApiKey => _clean(dotenv.env['MERCURY_API_KEY']);
+
+  /// Optional OpenAI API key for GPT-labeled models.
+  static String? get openAiApiKey => _clean(dotenv.env['OPENAI_API_KEY']);
+
+    /// Base URL for Mercury endpoint (Inception Labs).
+  static String get mercuryBaseUrl =>
+      _clean(dotenv.env['MERCURY_BASE_URL']) ??
+      'https://api.inceptionlabs.ai/v1/chat/completions';
+
+  /// Model name used for Mercury endpoint calls.
+  static String get mercuryModel =>
+      _clean(dotenv.env['MERCURY_MODEL']) ?? 'mercury-2';
+
+  /// Base URL for OpenAI endpoint calls.
+  static String get openAiBaseUrl =>
+      _clean(dotenv.env['OPENAI_BASE_URL']) ??
+      'https://api.openai.com/v1/chat/completions';
+
+  /// Default OpenAI model for non-Gemini providers.
+  static String get openAiModel =>
+      _clean(dotenv.env['OPENAI_MODEL']) ?? 'gpt-4o-mini';
 }

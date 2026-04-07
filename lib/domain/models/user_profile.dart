@@ -73,7 +73,7 @@ class UserProfile {
   /// Creates a default guest profile for unauthenticated state.
   factory UserProfile.guest() => const UserProfile(
     id: 'guest',
-    name: 'Aland Raed',
-    email: 'aland.raed.othman@gmail.com',
+    name: 'Guest User',
+    email: 'not-signed-in@local',
   );
 }

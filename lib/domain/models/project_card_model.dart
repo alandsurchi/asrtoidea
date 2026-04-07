@@ -6,6 +6,8 @@ import '../../../core/app_export.dart';
 class ProjectCardModel extends Equatable {
   ProjectCardModel({
     this.id,
+    this.createdById,
+    this.createdByName,
     this.title,
     this.description,
     this.backgroundImage,
@@ -20,6 +22,8 @@ class ProjectCardModel extends Equatable {
     this.comments,
   }) {
     id = id ?? "";
+    createdById = createdById ?? "";
+    createdByName = createdByName ?? "";
     title = title ?? "";
     description = description ?? "";
     backgroundImage = backgroundImage ?? "";
@@ -35,6 +39,8 @@ class ProjectCardModel extends Equatable {
   }
 
   String? id;
+  String? createdById;
+  String? createdByName;
   String? title;
   String? description;
   String? backgroundImage;
@@ -50,6 +56,8 @@ class ProjectCardModel extends Equatable {
 
   ProjectCardModel copyWith({
     String? id,
+    String? createdById,
+    String? createdByName,
     String? title,
     String? description,
     String? backgroundImage,
@@ -65,6 +73,8 @@ class ProjectCardModel extends Equatable {
   }) {
     return ProjectCardModel(
       id: id ?? this.id,
+      createdById: createdById ?? this.createdById,
+      createdByName: createdByName ?? this.createdByName,
       title: title ?? this.title,
       description: description ?? this.description,
       backgroundImage: backgroundImage ?? this.backgroundImage,
@@ -83,6 +93,8 @@ class ProjectCardModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    createdById,
+    createdByName,
     title,
     description,
     backgroundImage,
@@ -100,6 +112,8 @@ class ProjectCardModel extends Equatable {
   /// Serializes to a JSON map suitable for REST or Firestore.
   Map<String, dynamic> toJson() => {
     'id': id,
+    'createdById': createdById,
+    'createdByName': createdByName,
     'title': title,
     'description': description,
     'backgroundImage': backgroundImage,
@@ -118,6 +132,8 @@ class ProjectCardModel extends Equatable {
   factory ProjectCardModel.fromJson(Map<String, dynamic> json) =>
       ProjectCardModel(
         id: json['id'] as String?,
+        createdById: json['createdById'] as String?,
+        createdByName: json['createdByName'] as String?,
         title: json['title'] as String?,
         description: json['description'] as String?,
         backgroundImage: json['backgroundImage'] as String?,

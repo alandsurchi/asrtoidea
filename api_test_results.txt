@@ -1,0 +1,17 @@
+Gemini Error: 404 {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Mercury/OpenAI HTTP Error: 401 {
+    "error": {
+        "message": "Incorrect API key provided: sk_8f431***********************9a78. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+

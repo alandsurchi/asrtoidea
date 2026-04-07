@@ -9,9 +9,12 @@ import './providers/theme_provider.dart';
 import './widgets/custom_page_transition_builder.dart';
 import 'core/app_export.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
   Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
