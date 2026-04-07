@@ -35,6 +35,8 @@ class AppLocalizations {
   String get settingsAccount => _t('settingsAccount');
   String get settingsLanguage => _t('settingsLanguage');
   String get settingsBilling => _t('settingsBilling');
+    String get settingsFavoritesHub => _t('settingsFavoritesHub');
+    String get settingsMyPosts => _t('settingsMyPosts');
   String get settingsDarkMode => _t('settingsDarkMode');
   String get settingsSecurity => _t('settingsSecurity');
   String get settingsReminders => _t('settingsReminders');
@@ -208,6 +210,18 @@ class AppLocalizations {
   String get securityDesc => _t('securityDesc');
   String get billingTitle => _t('billingTitle');
   String get billingDesc => _t('billingDesc');
+    String get favoritesHubTitle => _t('favoritesHubTitle');
+    String get favoritesHubSubtitle => _t('favoritesHubSubtitle');
+    String get myPostsTitle => _t('myPostsTitle');
+    String get myPostsSubtitle => _t('myPostsSubtitle');
+    String get savedPosts => _t('savedPosts');
+    String get likedPosts => _t('likedPosts');
+    String get noSavedPosts => _t('noSavedPosts');
+    String get noLikedPosts => _t('noLikedPosts');
+    String get noMyPosts => _t('noMyPosts');
+    String get profileLoadHint => _t('profileLoadHint');
+    String get removeSaved => _t('removeSaved');
+    String get openPost => _t('openPost');
   String get remindersTitle => _t('remindersTitle');
   String get remindersDesc => _t('remindersDesc');
   String get upgradePlanTitle => _t('upgradePlanTitle');
@@ -232,6 +246,8 @@ class AppLocalizations {
       'settingsAccount': 'Account',
       'settingsLanguage': 'Language',
       'settingsBilling': 'Billing & Subscriptions',
+    'settingsFavoritesHub': 'Saved & Liked Posts',
+    'settingsMyPosts': 'My Posts',
       'settingsDarkMode': 'Dark Mode',
       'settingsSecurity': 'Security',
       'settingsReminders': 'Reminders',
@@ -397,6 +413,18 @@ class AppLocalizations {
           'Manage your password, two-factor authentication, and security preferences.',
       'billingTitle': 'Billing & Subscriptions',
       'billingDesc': 'Manage your subscription plan and payment methods.',
+    'favoritesHubTitle': 'Favorites Hub',
+    'favoritesHubSubtitle': 'Your saved and liked posts in one place',
+    'myPostsTitle': 'My Posts',
+    'myPostsSubtitle': 'All posts you published',
+    'savedPosts': 'Saved',
+    'likedPosts': 'Liked',
+    'noSavedPosts': 'You have no saved posts yet.',
+    'noLikedPosts': 'You have no liked posts yet.',
+    'noMyPosts': 'You have not created any posts yet.',
+    'profileLoadHint': 'Profile is still loading. Pull to refresh and try again.',
+    'removeSaved': 'Remove Save',
+    'openPost': 'Open Post',
       'remindersTitle': 'Reminders',
       'remindersDesc':
           'Set up daily reminders to keep track of your ideas and tasks.',

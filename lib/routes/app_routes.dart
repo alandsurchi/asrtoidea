@@ -17,6 +17,8 @@ import '../presentation/language_settings_screen/language_settings_screen.dart';
 import '../presentation/premium_opening_animation/premium_opening_animation.dart';
 import '../presentation/interactive_ideas_home/interactive_ideas_home.dart';
 import '../presentation/idea_detail_view/idea_detail_view.dart';
+import '../presentation/favorites_hub_screen/favorites_hub_screen.dart';
+import '../presentation/my_posts_screen/my_posts_screen.dart';
 
 class AppRoutes {
   // Onboarding flow
@@ -46,6 +48,8 @@ class AppRoutes {
   static const String editProfileScreen = '/edit_profile_screen';
   static const String notificationCenterScreen = '/notification_center_screen';
   static const String languageSettingsScreen = '/language_settings_screen';
+    static const String favoritesHubScreen = '/favorites_hub_screen';
+    static const String myPostsScreen = '/my_posts_screen';
   static const String interactiveIdeasHome = '/interactive-ideas-home';
   static const String ideaDetailView = '/idea-detail-view';
     static const String standardIdeaDetailPrefix = '/idea-detail-view';
@@ -132,6 +136,8 @@ class AppRoutes {
     editProfileScreen: (context) => EditProfileScreen(),
     notificationCenterScreen: (context) => NotificationCenterScreen(),
     languageSettingsScreen: (context) => const LanguageSettingsScreen(),
+        favoritesHubScreen: (context) => const FavoritesHubScreen(),
+        myPostsScreen: (context) => const MyPostsScreen(),
     interactiveIdeasHome: (context) => const InteractiveIdeasHome(),
     ideaDetailView: (context) => const IdeaDetailView(),
     appNavigationScreen: (context) => AppNavigationScreen(),

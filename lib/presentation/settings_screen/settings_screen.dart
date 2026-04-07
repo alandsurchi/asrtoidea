@@ -453,6 +453,32 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
           shadowColor: shadowColor,
         ),
         SizedBox(height: 12.h),
+        _buildSettingsItem(
+          icon: Icons.bookmarks_outlined,
+          title: localizations.settingsFavoritesHub,
+          onTap: () => onTapFavoritesHub(context),
+          isRtl: isRtl,
+          textColor: textColor,
+          cardColor: cardColor,
+          iconBgColor: iconBgColor,
+          iconColor: iconColor,
+          subTextColor: subTextColor,
+          shadowColor: shadowColor,
+        ),
+        SizedBox(height: 12.h),
+        _buildSettingsItem(
+          icon: Icons.inventory_2_outlined,
+          title: localizations.settingsMyPosts,
+          onTap: () => onTapMyPosts(context),
+          isRtl: isRtl,
+          textColor: textColor,
+          cardColor: cardColor,
+          iconBgColor: iconBgColor,
+          iconColor: iconColor,
+          subTextColor: subTextColor,
+          shadowColor: shadowColor,
+        ),
+        SizedBox(height: 12.h),
         _buildSwitchItem(
           icon: Icons.dark_mode_outlined,
           title: localizations.settingsDarkMode,
@@ -991,6 +1017,14 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  void onTapFavoritesHub(BuildContext context) {
+    NavigatorService.pushNamed(AppRoutes.favoritesHubScreen);
+  }
+
+  void onTapMyPosts(BuildContext context) {
+    NavigatorService.pushNamed(AppRoutes.myPostsScreen);
   }
 
   void onTapSecurity(BuildContext context) {
