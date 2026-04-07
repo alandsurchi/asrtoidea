@@ -23,6 +23,12 @@ class EnvConfig {
     return dotenv.env['API_BASE_URL'] ?? 'https://asrtoidea-production.up.railway.app/api/v1';
   }
 
+  /// Canonical public web origin used when generating share links.
+  static String get publicWebBaseUrl {
+    return dotenv.env['PUBLIC_WEB_BASE_URL'] ??
+        'https://web-sand-eight-49.vercel.app';
+  }
+
   /// Request timeout in seconds
   static int get requestTimeoutSeconds {
     final timeoutStr = dotenv.env['REQUEST_TIMEOUT_SECONDS'];

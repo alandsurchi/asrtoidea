@@ -48,6 +48,9 @@ class AppRoutes {
   static const String languageSettingsScreen = '/language_settings_screen';
   static const String interactiveIdeasHome = '/interactive-ideas-home';
   static const String ideaDetailView = '/idea-detail-view';
+    static const String standardIdeaDetailPrefix = '/idea-detail-view';
+    static const String semanticIdeaPrefix = '/idea';
+    static const String semanticProjectPrefix = '/project';
   static const String appNavigationScreen = '/app_navigation_screen';
 
   // Legacy aliases kept for backward compatibility
@@ -55,6 +58,60 @@ class AppRoutes {
       '/magic_idea_chat_screen_initial_page';
 
   static const String initialRoute = '/';
+
+    static String buildIdeaDetailPath(String id) {
+        final safeId = Uri.encodeComponent(id.trim());
+        return '$standardIdeaDetailPrefix/$safeId';
+    }
+
+    static String buildSemanticDetailPath(String entityType, String id) {
+        if (entityType.toLowerCase().trim() == 'project') {
+            final safeId = Uri.encodeComponent(id.trim());
+            return '$semanticProjectPrefix/$safeId';
+        }
+        return buildIdeaDetailPath(id);
+    }
+
+    static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+        final name = settings.name ?? '';
+
+        final uri = Uri.tryParse(name);
+        final segments = uri?.pathSegments ?? const <String>[];
+        if (segments.length >= 2) {
+            final type = segments.first.toLowerCase();
+            final id = segments[1].trim();
+
+            if (id.isNotEmpty) {
+                if (type == 'idea-detail-view' || type == 'idea') {
+                    return MaterialPageRoute(
+                        settings: RouteSettings(
+                            name: ideaDetailView,
+                            arguments: {
+                                'entityType': 'idea',
+                                'id': Uri.decodeComponent(id),
+                            },
+                        ),
+                        builder: (context) => const IdeaDetailView(),
+                    );
+                }
+
+                if (type == 'project') {
+                    return MaterialPageRoute(
+                        settings: RouteSettings(
+                            name: ideaDetailView,
+                            arguments: {
+                                'entityType': 'project',
+                                'id': Uri.decodeComponent(id),
+                            },
+                        ),
+                        builder: (context) => const IdeaDetailView(),
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
 
   static Map<String, WidgetBuilder> get routes => {
     premiumOpeningAnimation: (context) => const PremiumOpeningAnimation(),

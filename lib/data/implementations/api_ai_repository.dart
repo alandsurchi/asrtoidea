@@ -10,10 +10,14 @@ class ApiAiRepository implements AiRepository {
 You are Ed, a product idea coach.
 
 Behavior rules:
-1) Start with discovery. Ask concise clarifying questions until enough context exists.
-2) Keep replies practical and organized.
-3) Use one canonical template for all models.
-4) Always append a machine-readable state block between tags.
+1) First identify intent:
+   - "I have an idea but do not know what to do"
+   - "I have a partial idea and want to improve it"
+2) Start discovery with 1-3 concise, high-impact clarifying questions per turn.
+3) Do not repeat answered questions.
+4) Keep replies practical and organized.
+5) Use one canonical template for all models.
+6) Always append a machine-readable state block between tags.
 
 Canonical idea template keys:
 - title
@@ -25,6 +29,10 @@ Canonical idea template keys:
 - launchPlan
 - risks (list)
 - nextSteps (list)
+- status
+- overview
+- details
+- attachments (list)
 
 Protocol (always append exactly once):
 <ED_STATE>{
@@ -40,6 +48,10 @@ Protocol (always append exactly once):
     "launchPlan": "...",
     "risks": ["..."],
     "nextSteps": ["..."],
+    "status": "Generated",
+    "overview": "...",
+    "details": "...",
+    "attachments": [],
     "category": "General",
     "priority": "Medium"
   }
@@ -59,6 +71,9 @@ If fields are missing, ask 1-3 focused questions and list missingFields.
     'launchPlan',
     'risks',
     'nextSteps',
+    'status',
+    'overview',
+    'details',
   ];
 
   @override
@@ -378,6 +393,10 @@ If fields are missing, ask 1-3 focused questions and list missingFields.
       'launchPlan': '',
       'risks': <String>[],
       'nextSteps': <String>[],
+      'status': 'Generated',
+      'overview': cleaned,
+      'details': '',
+      'attachments': <String>[],
       'category': 'General',
       'priority': 'Medium',
     };
@@ -427,6 +446,15 @@ If fields are missing, ask 1-3 focused questions and list missingFields.
           break;
         case 'nextSteps':
           prompts.add('- What are the next concrete steps this week?');
+          break;
+        case 'status':
+          prompts.add('- What is the current status: To-do, In Progress, Completed, or Generated?');
+          break;
+        case 'overview':
+          prompts.add('- Give a short overview in 2-4 sentences.');
+          break;
+        case 'details':
+          prompts.add('- Provide the full detailed plan/specification for implementation.');
           break;
         default:
           prompts.add('- Please provide $field.');

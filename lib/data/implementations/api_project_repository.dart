@@ -118,19 +118,36 @@ class ApiProjectRepository implements ProjectRepository {
         body: {'comment': comment},
       );
 
-      final apiResponse = ApiResponse<ProjectCardModel>.fromJson(
-        response,
-        (json) => ProjectCardModel.fromJson(json as Map<String, dynamic>),
-      );
+      final dynamic rawData = response['data'];
+      if (rawData is Map<String, dynamic>) {
+        final apiResponse = ApiResponse<ProjectCardModel>.fromJson(
+          response,
+          (json) => ProjectCardModel.fromJson(json as Map<String, dynamic>),
+        );
 
-      if (apiResponse.data == null) {
-        throw Exception('Failed to parse commented project.');
+        if (apiResponse.data == null) {
+          throw Exception('Failed to parse commented project.');
+        }
+
+        final updated = apiResponse.data!;
+        final current = await LocalStorageService.loadProjectsList() ?? [];
+        final idx = current.indexWhere((p) => p.id == updated.id);
+        if (idx != -1) current[idx] = updated;
+        await LocalStorageService.saveProjectsList(current);
+        return updated;
       }
 
-      final updated = apiResponse.data!;
+      // Thread API may return comment list for detail flows; keep explore behavior by
+      // applying an optimistic local append when project payload is not returned.
       final current = await LocalStorageService.loadProjectsList() ?? [];
-      final idx = current.indexWhere((p) => p.id == updated.id);
-      if (idx != -1) current[idx] = updated;
+      final idx = current.indexWhere((p) => p.id == projectId);
+      if (idx == -1) throw Exception('Project not found: $projectId');
+      final updatedComments = [
+        ...(current[idx].comments ?? <String>[]),
+        comment.trim(),
+      ];
+      final updated = current[idx].copyWith(comments: updatedComments);
+      current[idx] = updated;
       await LocalStorageService.saveProjectsList(current);
       return updated;
     } catch (e) {

@@ -414,19 +414,25 @@ class MagicIdeaChatNotifier extends StateNotifier<MagicIdeaChatState> {
     required String backgroundImage,
   }) {
     final title = _readString(template, ['title', 'ideaTitle']) ?? 'Untitled Idea';
-    final description = _readString(template, ['solutionSummary', 'description']) ??
-        'No description provided.';
+    final overview =
+        _readString(template, ['overview', 'solutionSummary', 'description']) ??
+        'No overview provided.';
+    final details = _readString(template, ['details']) ??
+        _composeDetailsFromTemplate(template);
+    final attachments = _readStringList(template, ['attachments']);
 
     return IdeaCardModel(
       id: 'idea_$id',
       title: title,
-      description: description,
+      description: overview,
       category: category,
       priority: priority,
       status: status,
       backgroundImage: backgroundImage,
       teamMembers: const [],
       additionalMembersCount: '0',
+      fullContent: details,
+      attachments: attachments,
       timestamp: DateTime.now(),
     );
   }
@@ -440,13 +446,18 @@ class MagicIdeaChatNotifier extends StateNotifier<MagicIdeaChatState> {
     required String backgroundImage,
   }) {
     final title = _readString(template, ['title', 'ideaTitle']) ?? 'Untitled Project';
-    final summary =
-        _readString(template, ['solutionSummary', 'description']) ??
-            'No description provided.';
+    final summary = _readString(
+        template,
+        ['overview', 'solutionSummary', 'description'],
+      ) ??
+      'No overview provided.';
     final features = _readStringList(template, ['keyFeatures', 'coreFeatures']);
+    final details =
+      _readString(template, ['details']) ?? _composeDetailsFromTemplate(template);
+    final attachments = _readStringList(template, ['attachments']);
     final description = features.isEmpty
-        ? summary
-        : '$summary\n\nKey Features: ${features.join(', ')}';
+      ? summary
+      : '$summary\n\nKey Features: ${features.join(', ')}';
 
     return ProjectCardModel(
       id: 'project_$id',
@@ -462,7 +473,32 @@ class MagicIdeaChatNotifier extends StateNotifier<MagicIdeaChatState> {
       actionIcon: '',
       isSaved: false,
       comments: const [],
+      fullContent: details,
+      attachments: attachments,
+      createdDate: DateTime.now().toIso8601String(),
+      timestamp: DateTime.now(),
     );
+  }
+
+  String _composeDetailsFromTemplate(Map<String, dynamic> template) {
+    final problem = _readString(template, ['problemStatement']) ?? '';
+    final users = _readString(template, ['targetUsers']) ?? '';
+    final businessModel = _readString(template, ['businessModel']) ?? '';
+    final launchPlan = _readString(template, ['launchPlan']) ?? '';
+    final features = _readStringList(template, ['keyFeatures']);
+    final risks = _readStringList(template, ['risks']);
+    final nextSteps = _readStringList(template, ['nextSteps']);
+
+    final lines = <String>[];
+    if (problem.isNotEmpty) lines.add('Problem Statement\n$problem');
+    if (users.isNotEmpty) lines.add('Target Users\n$users');
+    if (features.isNotEmpty) lines.add('Key Features\n- ${features.join('\n- ')}');
+    if (businessModel.isNotEmpty) lines.add('Business Model\n$businessModel');
+    if (launchPlan.isNotEmpty) lines.add('Launch Plan\n$launchPlan');
+    if (risks.isNotEmpty) lines.add('Risks\n- ${risks.join('\n- ')}');
+    if (nextSteps.isNotEmpty) lines.add('Next Steps\n- ${nextSteps.join('\n- ')}');
+
+    return lines.isEmpty ? 'No details provided.' : lines.join('\n\n');
   }
 
   String _resolveSystemStatus(Map<String, dynamic> template) {

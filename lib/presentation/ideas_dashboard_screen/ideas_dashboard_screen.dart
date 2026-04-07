@@ -834,10 +834,16 @@ class IdeasDashboardScreenState extends ConsumerState<IdeasDashboardScreen> {
   }
 
   void _onTapIdeaCard(BuildContext context, [String? ideaId]) {
+    final resolvedId = (ideaId ?? '').trim();
+    if (resolvedId.isEmpty) return;
+
     Navigator.pushNamed(
       context,
       AppRoutes.ideaDetailView,
-      arguments: ideaId ?? 'idea_1',
+      arguments: {
+        'entityType': 'idea',
+        'id': resolvedId,
+      },
     );
   }
 }

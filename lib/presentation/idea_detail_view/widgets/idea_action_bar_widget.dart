@@ -64,40 +64,41 @@ class IdeaActionBarWidget extends StatelessWidget {
             isDark: isDark,
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: onEdit,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1D00FF), Color(0xFF5B4BF5)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1D00FF).withAlpha(60),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+          if (idea.canEdit)
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1D00FF), Color(0xFF5B4BF5)],
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.edit_rounded, color: Colors.white, size: 15),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1D00FF).withAlpha(60),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.edit_rounded, color: Colors.white, size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

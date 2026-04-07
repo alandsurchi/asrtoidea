@@ -209,7 +209,7 @@ class ProjectExploreDashboardScreenState
                 statusText: projectModel.statusText,
                 statusIcon: projectModel.statusIcon,
                 actionIcon: projectModel.actionIcon,
-                onTap: () => onTapProjectCard(context, index),
+                onTap: () => onTapProjectCard(context, projectModel.id),
                 onActionTap: () => onTapProjectAction(context, projectModel),
               );
             },
@@ -510,11 +510,17 @@ class ProjectExploreDashboardScreenState
     );
   }
 
-  void onTapProjectCard(BuildContext context, int index) {
+  void onTapProjectCard(BuildContext context, String? projectId) {
+    final resolvedId = (projectId ?? '').trim();
+    if (resolvedId.isEmpty) return;
+
     Navigator.pushNamed(
       context,
       AppRoutes.ideaDetailView,
-      arguments: 'idea_$index',
+      arguments: {
+        'entityType': 'project',
+        'id': resolvedId,
+      },
     );
   }
 
@@ -542,8 +548,7 @@ class ProjectExploreDashboardScreenState
           loc.viewDetails,
           isDark,
           () {
-            // Using index 0 randomly since this is just navigation legacy, but really should be project.id
-            onTapProjectCard(context, 0); 
+            onTapProjectCard(context, project.id);
           },
         ),
         const SizedBox(height: 10),
@@ -553,7 +558,7 @@ class ProjectExploreDashboardScreenState
           "Add Comment",
           isDark,
           () {
-            _showCommentDialog(context, project.id!, isDark, loc);
+            onTapProjectCard(context, project.id);
           },
         ),
         const SizedBox(height: 10),
@@ -626,68 +631,6 @@ class ProjectExploreDashboardScreenState
           ),
         ),
       ],
-    );
-  }
-
-  void _showCommentDialog(BuildContext context, String projectId, bool isDark, AppLocalizations loc) {
-    Navigator.pop(context); // Close the bottom sheet
-
-    final _commentController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          "Type your comment",
-          style: TextStyleHelper.instance.title16SemiBoldPoppins.copyWith(
-            color: isDark ? Colors.white : const Color(0xFF000000),
-          ),
-        ),
-        content: TextField(
-          controller: _commentController,
-          maxLines: 3,
-          style: TextStyle(color: isDark ? Colors.white : Colors.black),
-          decoration: InputDecoration(
-            hintText: "Add your feedback...",
-            hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black26),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Color(0xFF1D00FF)),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(loc.cancel, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (_commentController.text.trim().isNotEmpty) {
-                ref.read(projectExploreDashboardNotifier.notifier).addComment(projectId, _commentController.text);
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Comment successfully added!"),
-                    backgroundColor: Color(0xFF1DE4A2),
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1D00FF),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text("Post Comment", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
     );
   }
 

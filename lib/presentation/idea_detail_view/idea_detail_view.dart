@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ai_idea_generator/domain/models/idea_detail_model.dart';
+
 import '../../core/app_export.dart';
+import '../../core/config/env_config.dart';
+import '../ideas_dashboard_screen/notifier/ideas_dashboard_notifier.dart';
+import '../project_explore_dashboard_screen/notifier/project_explore_dashboard_notifier.dart';
 import './notifier/idea_detail_notifier.dart';
 import './widgets/idea_detail_header_widget.dart';
 import './widgets/idea_action_bar_widget.dart';
 import './widgets/idea_comment_section_widget.dart';
 import './widgets/idea_attachments_widget.dart';
-import './widgets/idea_team_members_widget.dart';
 
 class IdeaDetailView extends ConsumerStatefulWidget {
   const IdeaDetailView({Key? key}) : super(key: key);
@@ -20,7 +24,7 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
-  String? _ideaId;
+  IdeaDetailRouteArgs? _routeArgs;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -45,10 +49,28 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String) {
-      _ideaId = args;
-    } else if (args is Map<String, dynamic>) {
-      _ideaId = args['id'] as String?;
+    if (args is IdeaDetailRouteArgs) {
+      _routeArgs = args;
+      return;
+    }
+
+    if (args is String && args.trim().isNotEmpty) {
+      _routeArgs = IdeaDetailRouteArgs(entityType: 'idea', id: args.trim());
+      return;
+    }
+
+    if (args is Map<String, dynamic>) {
+      final id = args['id']?.toString().trim() ?? '';
+      final type = (args['entityType'] ?? args['type'] ?? 'idea')
+          .toString()
+          .toLowerCase()
+          .trim();
+      if (id.isNotEmpty) {
+        _routeArgs = IdeaDetailRouteArgs(
+          entityType: type == 'project' ? 'project' : 'idea',
+          id: id,
+        );
+      }
     }
   }
 
@@ -63,7 +85,16 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
   Widget build(BuildContext context) {
     final bool isRtl = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final notifier = ref.watch(ideaDetailNotifierProvider(_ideaId));
+    final routeArgs = _routeArgs;
+    if (routeArgs == null) {
+      return Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F0F1A) : const Color(0xFFF7F7FB),
+        body: _buildErrorState(),
+      );
+    }
+
+    final detailProvider = ideaDetailNotifierProvider(routeArgs);
+    final notifier = ref.watch(detailProvider);
     final idea = notifier.ideaDetail;
 
     return Scaffold(
@@ -84,7 +115,8 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                     IdeaDetailHeaderWidget(
                       idea: idea,
                       onBack: () => Navigator.pop(context),
-                      onShare: () => _onShare(context),
+                      onShare: () => _onShare(context, idea),
+                      onMore: () => _showPostActions(context, idea),
                     ),
                     // Scrollable content
                     Expanded(
@@ -93,7 +125,7 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                         slivers: [
                           // Status + meta row
                           SliverToBoxAdapter(
-                            child: _buildMetaRow(context, idea.status, isRtl),
+                            child: _buildMetaRow(context, idea, isRtl),
                           ),
                           // Overview section
                           SliverToBoxAdapter(
@@ -182,19 +214,6 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                               ),
                             ),
                           // Team members
-                          if (idea.teamMembers.isNotEmpty)
-                            SliverToBoxAdapter(
-                              child: _buildSection(
-                                context,
-                                title: 'Team',
-                                icon: Icons.group_outlined,
-                                child: IdeaTeamMembersWidget(
-                                  teamMembers: idea.teamMembers,
-                                ),
-                                isRtl: isRtl,
-                                noPadding: true,
-                              ),
-                            ),
                           // Divider
                           SliverToBoxAdapter(
                             child: Padding(
@@ -217,46 +236,27 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                               replyText: notifier.replyText,
                               onCommentChanged: (text) => ref
                                   .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
+                                    detailProvider.notifier,
                                   )
                                   .updateCommentText(text),
                               onAddComment: () => ref
-                                  .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
-                                  )
+                                  .read(detailProvider.notifier)
                                   .addComment(),
                               onToggleCommentLike: (id) => ref
-                                  .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
-                                  )
+                                  .read(detailProvider.notifier)
                                   .toggleCommentLike(id),
                               onSetReplyingTo: (id) => ref
-                                  .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
-                                  )
+                                  .read(detailProvider.notifier)
                                   .setReplyingTo(id),
                               onReplyTextChanged: (text) => ref
-                                  .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
-                                  )
+                                  .read(detailProvider.notifier)
                                   .updateReplyText(text),
                               onAddReply: (parentId) => ref
-                                  .read(
-                                    ideaDetailNotifierProvider(
-                                      _ideaId,
-                                    ).notifier,
-                                  )
+                                  .read(detailProvider.notifier)
                                   .addReply(parentId),
+                              onEditComment: (commentId, content) => ref
+                                  .read(detailProvider.notifier)
+                                  .editComment(commentId, content),
                             ),
                           ),
                           // Bottom padding for action bar
@@ -271,19 +271,15 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                       idea: idea,
                       onLike: () {
                         HapticFeedback.lightImpact();
-                        ref
-                            .read(ideaDetailNotifierProvider(_ideaId).notifier)
-                            .toggleLike();
+                        ref.read(detailProvider.notifier).toggleLike();
                       },
                       onSave: () {
                         HapticFeedback.lightImpact();
-                        ref
-                            .read(ideaDetailNotifierProvider(_ideaId).notifier)
-                            .toggleSave();
+                        ref.read(detailProvider.notifier).toggleSave();
                         _showSaveSnackbar(context, !idea.isSaved);
                       },
                       onEdit: () => _showEditBottomSheet(context),
-                      onShare: () => _onShare(context),
+                      onShare: () => _onShare(context, idea),
                     ),
                   ],
                 ),
@@ -347,56 +343,57 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
     );
   }
 
-  Widget _buildMetaRow(BuildContext context, String status, bool isRtl) {
-    final statusConfig = _getStatusConfig(status);
+  Widget _buildMetaRow(BuildContext context, IdeaDetailModel idea, bool isRtl) {
+    final statusConfig = _getStatusConfig(idea.status);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
         children: [
           // Status chip
-          GestureDetector(
-            onTap: () => _showStatusPicker(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: statusConfig['color'].withAlpha(24),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: statusConfig['color'].withAlpha(80),
-                  width: 1,
+          if (idea.canEdit)
+            GestureDetector(
+              onTap: () => _showStatusPicker(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusConfig['color'].withAlpha(24),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: statusConfig['color'].withAlpha(80),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: statusConfig['color'],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      idea.status,
+                      style: TextStyle(
+                        color: statusConfig['color'],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: statusConfig['color'],
+                      size: 14,
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: statusConfig['color'],
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    status,
-                    style: TextStyle(
-                      color: statusConfig['color'],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: statusConfig['color'],
-                    size: 14,
-                  ),
-                ],
-              ),
             ),
-          ),
           const Spacer(),
           // Views count
           Row(
@@ -408,7 +405,7 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
               ),
               const SizedBox(width: 4),
               Text(
-                '1.2k views',
+                '${_formatViews(idea.viewCount)} views',
                 style: TextStyle(color: const Color(0xFF9E9EBE), fontSize: 12),
               ),
             ],
@@ -500,6 +497,12 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
   }
 
   void _showStatusPicker(BuildContext context) {
+    final args = _routeArgs;
+    if (args == null) return;
+
+    final detail = ref.read(ideaDetailNotifierProvider(args)).ideaDetail;
+    if (detail == null || !detail.canEdit) return;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBg = isDark ? const Color(0xFF1E1E2E) : Colors.white;
     final handleColor = isDark
@@ -561,9 +564,7 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
                   ),
                 ),
                 onTap: () {
-                  ref
-                      .read(ideaDetailNotifierProvider(_ideaId).notifier)
-                      .updateStatus(s);
+                  ref.read(ideaDetailNotifierProvider(args).notifier).updateStatus(s);
                   Navigator.pop(ctx);
                 },
               );
@@ -576,8 +577,11 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
   }
 
   void _showEditBottomSheet(BuildContext context) {
-    final idea = ref.read(ideaDetailNotifierProvider(_ideaId)).ideaDetail;
-    if (idea == null) return;
+    final args = _routeArgs;
+    if (args == null) return;
+    final idea = ref.read(ideaDetailNotifierProvider(args)).ideaDetail;
+    if (idea == null || !idea.canEdit) return;
+
     final titleController = TextEditingController(text: idea.title);
     final descController = TextEditingController(text: idea.description);
 
@@ -671,7 +675,14 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await ref
+                      .read(ideaDetailNotifierProvider(args).notifier)
+                      .updateMainContent(
+                        title: titleController.text,
+                        description: descController.text,
+                      );
+                  if (!mounted) return;
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -711,10 +722,199 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
     );
   }
 
-  void _onShare(BuildContext context) {
+  void _showPostActions(BuildContext context, IdeaDetailModel idea) {
+    if (!idea.canEdit) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Only the owner can manage this post.', style: TextStyle()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final makePrivate = idea.isPublic;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDEDEF0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(
+                  makePrivate
+                      ? Icons.lock_outline_rounded
+                      : Icons.public_rounded,
+                  color: const Color(0xFF1D00FF),
+                ),
+                title: Text(
+                  makePrivate ? 'Make Private' : 'Make Public',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  makePrivate
+                      ? 'Only you can open this post.'
+                      : 'Everyone can open and comment.',
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final args = _routeArgs;
+                  if (args == null) return;
+
+                  final ok = await ref
+                      .read(ideaDetailNotifierProvider(args).notifier)
+                      .toggleVisibility();
+                  if (!mounted) return;
+
+                  if (!ok) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not update visibility.', style: TextStyle()),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
+                  _refreshDashboards(args.entityType);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        makePrivate
+                            ? 'Post is now private.'
+                            : 'Post is now public.',
+                        style: TextStyle(),
+                      ),
+                      backgroundColor: const Color(0xFF1D00FF),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.delete_outline_rounded,
+                  color: const Color(0xFFFF3B30),
+                ),
+                title: Text(
+                  'Delete Post',
+                  style: TextStyle(
+                    color: const Color(0xFFFF3B30),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text('This action cannot be undone.'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmDelete(context, idea);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, IdeaDetailModel idea) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete post?',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'This will permanently delete "${idea.title}".',
+          style: TextStyle(
+            color: isDark ? const Color(0xFFB0B0C8) : const Color(0xFF5A5A72),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle()),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF3B30),
+            ),
+            child: Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    final args = _routeArgs;
+    if (args == null) return;
+
+    final deleted = await ref
+        .read(ideaDetailNotifierProvider(args).notifier)
+        .deleteEntity();
+    if (!mounted) return;
+
+    if (!deleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not delete post.', style: TextStyle()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    _refreshDashboards(args.entityType);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Link copied to clipboard!', style: TextStyle()),
+        content: Text('Post deleted.', style: TextStyle()),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Navigator.pop(context);
+  }
+
+  void _refreshDashboards(String entityType) {
+    if (entityType == 'project') {
+      ref.invalidate(projectExploreDashboardNotifier);
+      return;
+    }
+    ref.invalidate(ideasDashboardNotifier);
+  }
+
+  void _onShare(BuildContext context, IdeaDetailModel idea) {
+    final routePath = AppRoutes.buildIdeaDetailPath(idea.id);
+    final link = _buildAbsoluteShareLink(routePath);
+
+    Clipboard.setData(ClipboardData(text: link));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Link copied: $link', style: TextStyle()),
         backgroundColor: const Color(0xFF1D00FF),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -740,5 +940,40 @@ class _IdeaDetailViewState extends ConsumerState<IdeaDetailView>
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  String _formatViews(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}m';
+    }
+    if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}k';
+    }
+    return '$count';
+  }
+
+  String _buildAbsoluteShareLink(String routePath) {
+    final configuredBase = EnvConfig.publicWebBaseUrl;
+    final configuredUri = Uri.tryParse(configuredBase);
+    if (configuredUri != null &&
+        configuredUri.hasAuthority &&
+        (configuredUri.scheme == 'http' || configuredUri.scheme == 'https')) {
+      return configuredUri.replace(path: routePath).toString();
+    }
+
+    final base = Uri.base;
+    final hasWebOrigin = base.hasAuthority &&
+        (base.scheme == 'http' || base.scheme == 'https');
+    if (!hasWebOrigin) {
+      return routePath;
+    }
+
+    final uri = Uri(
+      scheme: base.scheme,
+      host: base.host,
+      port: base.hasPort ? base.port : null,
+      path: routePath,
+    );
+    return uri.toString();
   }
 }

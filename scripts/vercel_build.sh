@@ -17,6 +17,7 @@ flutter config --enable-web
 if [ ! -f ".env" ]; then
   cat > .env <<EOF
 API_BASE_URL=${API_BASE_URL:-https://asrtoidea-production.up.railway.app/api/v1}
+PUBLIC_WEB_BASE_URL=${PUBLIC_WEB_BASE_URL:-https://web-sand-eight-49.vercel.app}
 REQUEST_TIMEOUT_SECONDS=${REQUEST_TIMEOUT_SECONDS:-30}
 EOF
 fi

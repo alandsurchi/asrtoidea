@@ -73,6 +73,16 @@ class IdeaCardModel extends Equatable {
     this.backgroundImage,
     this.teamMembers,
     this.additionalMembersCount,
+    this.createdById,
+    this.createdByName,
+    this.createdByAvatar,
+    this.fullContent,
+    this.attachments,
+    this.viewCount,
+    this.likeCount,
+    this.isLiked,
+    this.isPublic,
+    this.canEdit,
     this.id,
     this.timestamp,
   }) {
@@ -84,6 +94,16 @@ class IdeaCardModel extends Equatable {
     backgroundImage = backgroundImage ?? "";
     teamMembers = teamMembers ?? [];
     additionalMembersCount = additionalMembersCount ?? "";
+    createdById = createdById ?? "";
+    createdByName = createdByName ?? "";
+    createdByAvatar = createdByAvatar ?? "";
+    fullContent = fullContent ?? "";
+    attachments = attachments ?? [];
+    viewCount = viewCount ?? 0;
+    likeCount = likeCount ?? 0;
+    isLiked = isLiked ?? false;
+    isPublic = isPublic ?? true;
+    canEdit = canEdit ?? false;
     id = id ?? "";
     timestamp = timestamp ?? DateTime.now();
   }
@@ -96,6 +116,16 @@ class IdeaCardModel extends Equatable {
   String? backgroundImage;
   List<TeamMemberModel>? teamMembers;
   String? additionalMembersCount;
+  String? createdById;
+  String? createdByName;
+  String? createdByAvatar;
+  String? fullContent;
+  List<String>? attachments;
+  int? viewCount;
+  int? likeCount;
+  bool? isLiked;
+  bool? isPublic;
+  bool? canEdit;
   String? id;
   DateTime? timestamp;
 
@@ -108,6 +138,16 @@ class IdeaCardModel extends Equatable {
     String? backgroundImage,
     List<TeamMemberModel>? teamMembers,
     String? additionalMembersCount,
+    String? createdById,
+    String? createdByName,
+    String? createdByAvatar,
+    String? fullContent,
+    List<String>? attachments,
+    int? viewCount,
+    int? likeCount,
+    bool? isLiked,
+    bool? isPublic,
+    bool? canEdit,
     String? id,
     DateTime? timestamp,
   }) {
@@ -121,6 +161,16 @@ class IdeaCardModel extends Equatable {
       teamMembers: teamMembers ?? this.teamMembers,
       additionalMembersCount:
           additionalMembersCount ?? this.additionalMembersCount,
+      createdById: createdById ?? this.createdById,
+      createdByName: createdByName ?? this.createdByName,
+      createdByAvatar: createdByAvatar ?? this.createdByAvatar,
+      fullContent: fullContent ?? this.fullContent,
+      attachments: attachments ?? this.attachments,
+      viewCount: viewCount ?? this.viewCount,
+      likeCount: likeCount ?? this.likeCount,
+      isLiked: isLiked ?? this.isLiked,
+      isPublic: isPublic ?? this.isPublic,
+      canEdit: canEdit ?? this.canEdit,
       id: id ?? this.id,
       timestamp: timestamp ?? this.timestamp,
     );
@@ -136,6 +186,16 @@ class IdeaCardModel extends Equatable {
       'backgroundImage': backgroundImage,
       'teamMembers': teamMembers?.map((m) => m.toJson()).toList(),
       'additionalMembersCount': additionalMembersCount,
+      'createdById': createdById,
+      'createdByName': createdByName,
+      'createdByAvatar': createdByAvatar,
+      'fullContent': fullContent,
+      'attachments': attachments,
+      'viewCount': viewCount,
+      'likeCount': likeCount,
+      'isLiked': isLiked,
+      'isPublic': isPublic,
+      'canEdit': canEdit,
       'id': id,
       'timestamp': timestamp?.toIso8601String(),
     };
@@ -153,6 +213,18 @@ class IdeaCardModel extends Equatable {
           ? (json['teamMembers'] as List).map((m) => TeamMemberModel.fromJson(m)).toList()
           : null,
       additionalMembersCount: json['additionalMembersCount'] as String?,
+      createdById: json['createdById'] as String?,
+      createdByName: json['createdByName'] as String?,
+      createdByAvatar: json['createdByAvatar'] as String?,
+      fullContent: json['fullContent'] as String?,
+      attachments: (json['attachments'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
+      viewCount: (json['viewCount'] as num?)?.toInt(),
+      likeCount: (json['likeCount'] as num?)?.toInt(),
+      isLiked: json['isLiked'] as bool?,
+      isPublic: json['isPublic'] as bool?,
+      canEdit: json['canEdit'] as bool?,
       id: json['id'] as String?,
       timestamp: json['timestamp'] != null ? DateTime.tryParse(json['timestamp'] as String) : null,
     );
@@ -168,6 +240,16 @@ class IdeaCardModel extends Equatable {
     backgroundImage,
     teamMembers,
     additionalMembersCount,
+    createdById,
+    createdByName,
+    createdByAvatar,
+    fullContent,
+    attachments,
+    viewCount,
+    likeCount,
+    isLiked,
+    isPublic,
+    canEdit,
     id,
     timestamp,
   ];

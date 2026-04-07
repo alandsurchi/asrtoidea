@@ -5,12 +5,14 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
   final IdeaDetailModel idea;
   final VoidCallback onBack;
   final VoidCallback onShare;
+  final VoidCallback onMore;
 
   const IdeaDetailHeaderWidget({
     Key? key,
     required this.idea,
     required this.onBack,
     required this.onShare,
+    required this.onMore,
   }) : super(key: key);
 
   @override
@@ -79,7 +81,7 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: onMore,
                         child: Container(
                           width: 38,
                           height: 38,
@@ -149,9 +151,12 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundImage: const NetworkImage(
-                      'https://i.pravatar.cc/150?img=12',
-                    ),
+                    backgroundImage: (idea.creatorAvatar.trim().isNotEmpty)
+                        ? NetworkImage(idea.creatorAvatar)
+                        : null,
+                    child: (idea.creatorAvatar.trim().isNotEmpty)
+                        ? null
+                        : const Icon(Icons.person, size: 14),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -161,8 +166,8 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
                           : CrossAxisAlignment.start,
                       children: [
                         Text(
-                          idea.teamMembers.isNotEmpty
-                              ? idea.teamMembers.first
+                          idea.creatorName.trim().isNotEmpty
+                              ? idea.creatorName
                               : 'Unknown',
                           style: TextStyle(
                             color: Colors.white,
@@ -172,7 +177,7 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          'Created ${idea.createdDate}  ·  Due ${idea.deadline}',
+                          'Created ${_formatCreatedDate(idea.createdDate)}',
                           style: TextStyle(
                             color: Colors.white.withAlpha(180),
                             fontSize: 11,
@@ -190,6 +195,35 @@ class IdeaDetailHeaderWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatCreatedDate(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) return 'Unknown';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+
+    final month = _monthShort(parsed.month);
+    return '$month ${parsed.day}, ${parsed.year}';
+  }
+
+  String _monthShort(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return 'Unknown';
+    return months[month - 1];
   }
 
   Widget _buildBadge(String label, Color bg, Color textColor) {

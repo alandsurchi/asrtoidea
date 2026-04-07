@@ -13,6 +13,7 @@ class IdeaCommentSectionWidget extends StatefulWidget {
   final Function(String?) onSetReplyingTo;
   final Function(String) onReplyTextChanged;
   final Function(String) onAddReply;
+  final Function(String, String) onEditComment;
 
   const IdeaCommentSectionWidget({
     Key? key,
@@ -26,6 +27,7 @@ class IdeaCommentSectionWidget extends StatefulWidget {
     required this.onSetReplyingTo,
     required this.onReplyTextChanged,
     required this.onAddReply,
+    required this.onEditComment,
   }) : super(key: key);
 
   @override
@@ -107,9 +109,7 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
             children: [
               const CircleAvatar(
                 radius: 18,
-                backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/150?img=3',
-                ),
+                child: Icon(Icons.person_outline, size: 16),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -119,44 +119,28 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE8E8F4)),
                   ),
-                  child: Row(
+                  child: TextField(
+                    controller: _commentController,
                     textDirection: isRtl
                         ? TextDirection.rtl
                         : TextDirection.ltr,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _commentController,
-                          textDirection: isRtl
-                              ? TextDirection.rtl
-                              : TextDirection.ltr,
-                          onChanged: widget.onCommentChanged,
-                          decoration: InputDecoration(
-                            hintText: 'Add a comment...',
-                            hintStyle: GoogleFonts.dmSans(
-                              color: const Color(0xFFB0B0C8),
-                              fontSize: 13,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 11,
-                            ),
-                          ),
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13,
-                            color: const Color(0xFF2D2D3A),
-                          ),
-                        ),
+                    onChanged: widget.onCommentChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Add a comment...',
+                      hintStyle: GoogleFonts.dmSans(
+                        color: const Color(0xFFB0B0C8),
+                        fontSize: 13,
                       ),
-                      GestureDetector(
-                        onTap: () => _showEmojiPicker(context),
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 10),
-                          child: Text('😊', style: TextStyle(fontSize: 17)),
-                        ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
                       ),
-                    ],
+                    ),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      color: const Color(0xFF2D2D3A),
+                    ),
                   ),
                 ),
               ),
@@ -192,51 +176,6 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
     );
   }
 
-  void _showEmojiPicker(BuildContext context) {
-    final emojis = ['😊', '👍', '🔥', '💡', '🎉', '❤️', '👏', '🚀'];
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Add Reaction',
-              style: GoogleFonts.dmSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1A1A2E),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              children: emojis
-                  .map(
-                    (emoji) => GestureDetector(
-                      onTap: () {
-                        final newText = _commentController.text + emoji;
-                        _commentController.text = newText;
-                        widget.onCommentChanged(newText);
-                        Navigator.pop(ctx);
-                      },
-                      child: Text(emoji, style: const TextStyle(fontSize: 28)),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildCommentItem(
     BuildContext context,
     CommentModel comment,
@@ -256,7 +195,12 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundImage: NetworkImage(comment.authorAvatar),
+                backgroundImage: comment.authorAvatar.trim().isNotEmpty
+                    ? NetworkImage(comment.authorAvatar)
+                    : null,
+                child: comment.authorAvatar.trim().isNotEmpty
+                    ? null
+                    : const Icon(Icons.person_outline, size: 14),
                 onBackgroundImageError: (_, __) {},
               ),
               const SizedBox(width: 10),
@@ -368,6 +312,20 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
                             ),
                           ),
                         ),
+                        if (comment.canEdit) ...[
+                          const SizedBox(width: 14),
+                          GestureDetector(
+                            onTap: () => _showEditCommentDialog(context, comment),
+                            child: Text(
+                              'Edit',
+                              style: GoogleFonts.dmSans(
+                                color: const Color(0xFF1D00FF),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -463,7 +421,12 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
                           children: [
                             CircleAvatar(
                               radius: 13,
-                              backgroundImage: NetworkImage(reply.authorAvatar),
+                              backgroundImage: reply.authorAvatar.trim().isNotEmpty
+                                  ? NetworkImage(reply.authorAvatar)
+                                  : null,
+                              child: reply.authorAvatar.trim().isNotEmpty
+                                  ? null
+                                  : const Icon(Icons.person_outline, size: 12),
                               onBackgroundImageError: (_, __) {},
                             ),
                             const SizedBox(width: 8),
@@ -519,23 +482,44 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
                                           ),
                                         ),
                                         const SizedBox(width: 10),
-                                        Icon(
-                                          reply.isLiked
-                                              ? Icons.favorite_rounded
-                                              : Icons.favorite_border_rounded,
-                                          color: reply.isLiked
-                                              ? const Color(0xFFFF3B30)
-                                              : const Color(0xFFB0B0C8),
-                                          size: 11,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          '${reply.likes}',
-                                          style: GoogleFonts.dmSans(
-                                            color: const Color(0xFFB0B0C8),
-                                            fontSize: 10,
+                                        GestureDetector(
+                                          onTap: () => widget.onToggleCommentLike(reply.id),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                reply.isLiked
+                                                    ? Icons.favorite_rounded
+                                                    : Icons.favorite_border_rounded,
+                                                color: reply.isLiked
+                                                    ? const Color(0xFFFF3B30)
+                                                    : const Color(0xFFB0B0C8),
+                                                size: 11,
+                                              ),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                '${reply.likes}',
+                                                style: GoogleFonts.dmSans(
+                                                  color: const Color(0xFFB0B0C8),
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
+                                        if (reply.canEdit) ...[
+                                          const SizedBox(width: 10),
+                                          GestureDetector(
+                                            onTap: () => _showEditCommentDialog(context, reply),
+                                            child: Text(
+                                              'Edit',
+                                              style: GoogleFonts.dmSans(
+                                                color: const Color(0xFF1D00FF),
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ],
@@ -549,6 +533,45 @@ class _IdeaCommentSectionWidgetState extends State<IdeaCommentSectionWidget> {
                     .toList(),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditCommentDialog(BuildContext context, CommentModel comment) {
+    final controller = TextEditingController(text: comment.content);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Edit comment',
+          style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: 'Update comment...',
+            hintStyle: GoogleFonts.dmSans(color: const Color(0xFFB0B0C8)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.dmSans()),
+          ),
+          TextButton(
+            onPressed: () {
+              final updated = controller.text.trim();
+              if (updated.isEmpty) return;
+              widget.onEditComment(comment.id, updated);
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'Save',
+              style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+            ),
+          ),
         ],
       ),
     );

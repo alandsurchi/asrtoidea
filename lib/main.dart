@@ -106,6 +106,7 @@ class MyApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
+          onGenerateRoute: AppRoutes.onGenerateRoute,
         );
       },
     );

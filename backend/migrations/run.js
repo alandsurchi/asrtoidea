@@ -8,11 +8,18 @@ async function runMigrations() {
   const client = await pool.connect();
   try {
     console.log('🔧 Running migrations...');
-    
-    const sqlFile = path.join(__dirname, '001_init.sql');
-    const sql = fs.readFileSync(sqlFile, 'utf8');
-    
-    await client.query(sql);
+
+    const files = fs
+      .readdirSync(__dirname)
+      .filter((file) => file.endsWith('.sql'))
+      .sort();
+
+    for (const file of files) {
+      const sqlFile = path.join(__dirname, file);
+      const sql = fs.readFileSync(sqlFile, 'utf8');
+      console.log(`➡️  Applying ${file}`);
+      await client.query(sql);
+    }
     
     console.log('✅ Migrations complete!');
   } catch (err) {

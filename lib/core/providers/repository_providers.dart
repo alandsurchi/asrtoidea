@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/project_repository.dart';
+import '../../domain/repositories/idea_detail_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../../data/network/api_client.dart';
 import '../../data/implementations/api_project_repository.dart';
 import '../../data/implementations/api_auth_repository.dart';
 import '../../data/implementations/api_idea_repository.dart';
+import '../../data/implementations/api_idea_detail_repository.dart';
 import '../../data/implementations/api_ai_repository.dart';
 
 /// ─── Dependency Injection ────────────────────────────────────────────────────
@@ -36,6 +38,11 @@ final ideaRepositoryProvider = Provider<IdeaRepository>(
 /// Provides the [ProjectRepository] implementation currently in use.
 final projectRepositoryProvider = Provider<ProjectRepository>(
   (ref) => ApiProjectRepository(ref.read(apiClientProvider)),
+);
+
+/// Provides the [IdeaDetailRepository] implementation currently in use.
+final ideaDetailRepositoryProvider = Provider<IdeaDetailRepository>(
+  (ref) => ApiIdeaDetailRepository(ref.read(apiClientProvider)),
 );
 
 /// Provides the [AuthRepository] implementation currently in use.
