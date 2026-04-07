@@ -20,7 +20,7 @@ class EnvConfig {
   static String get baseUrl {
     // Support multiple environments (dev/staging/production) via .env
     // Ensure we don't crash by providing a default fallback.
-    return dotenv.env['API_BASE_URL'] ?? 'https://your-app-production.up.railway.app/api/v1';
+    return dotenv.env['API_BASE_URL'] ?? 'https://asrtoidea-production.up.railway.app/api/v1';
   }
 
   /// Request timeout in seconds

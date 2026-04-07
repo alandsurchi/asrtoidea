@@ -3,6 +3,7 @@ import 'package:ai_idea_generator/domain/models/settings_model.dart';
 import 'package:ai_idea_generator/domain/repositories/auth_repository.dart';
 import 'package:ai_idea_generator/core/providers/repository_providers.dart';
 import 'package:ai_idea_generator/services/local_storage_service.dart';
+import 'package:ai_idea_generator/core/errors/app_exception.dart';
 import 'dart:developer' as dev;
 
 part 'settings_state.dart';
@@ -49,6 +50,17 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
         isSuccess: true,
       );
       await LocalStorageService.saveProfile(mapped);
+    } on AuthException catch (e) {
+      dev.log('SettingsNotifier.loadProfile(auth) failed', error: e);
+      await LocalStorageService.deleteToken();
+      await LocalStorageService.clearAll();
+      state = state.copyWith(
+        settingsModel: _sanitizeSettingsModel(
+          SettingsModel.guest(current: state.settingsModel),
+        ),
+        isLoading: false,
+        isSuccess: false,
+      );
     } catch (e) {
       dev.log('SettingsNotifier.loadProfile(remote) failed', error: e);
       state = state.copyWith(

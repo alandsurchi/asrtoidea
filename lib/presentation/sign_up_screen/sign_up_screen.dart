@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_export.dart';
 import '../../core/utils/validators.dart';
+import '../ideas_dashboard_screen/notifier/ideas_dashboard_notifier.dart';
+import '../magic_idea_chat_screen/notifier/magic_idea_chat_notifier.dart';
+import '../project_explore_dashboard_screen/notifier/project_explore_dashboard_notifier.dart';
+import '../settings_screen/notifier/settings_notifier.dart';
 import 'notifier/sign_up_notifier.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -45,7 +49,8 @@ class SignUpScreenState extends ConsumerState<SignUpScreen> {
 
               ref.listen(signUpNotifier, (previous, current) {
                 if (current.isLoading ?? false) {}
-                if (current.isSuccess ?? false) {
+                if (current.isSuccess == true && previous?.isSuccess != true) {
+                  _resetSessionProviders();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Sign up successful!')),
                   );
@@ -53,7 +58,8 @@ class SignUpScreenState extends ConsumerState<SignUpScreen> {
                     AppRoutes.mainShellScreen,
                   );
                 }
-                if (current.errorMessage?.isNotEmpty ?? false) {
+                if ((current.errorMessage?.isNotEmpty ?? false) &&
+                    previous?.errorMessage != current.errorMessage) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(current.errorMessage!)),
                   );
@@ -564,6 +570,13 @@ class SignUpScreenState extends ConsumerState<SignUpScreen> {
   /// Navigates to login screen
   void _onTapLoginRedirect(BuildContext context) {
     NavigatorService.pushNamed(AppRoutes.loginScreen);
+  }
+
+  void _resetSessionProviders() {
+    ref.invalidate(settingsNotifier);
+    ref.invalidate(ideasDashboardNotifier);
+    ref.invalidate(projectExploreDashboardNotifier);
+    ref.invalidate(magicIdeaChatNotifier);
   }
 }
 

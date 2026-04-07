@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_export.dart';
 import '../../core/utils/validators.dart';
+import '../ideas_dashboard_screen/notifier/ideas_dashboard_notifier.dart';
+import '../magic_idea_chat_screen/notifier/magic_idea_chat_notifier.dart';
+import '../project_explore_dashboard_screen/notifier/project_explore_dashboard_notifier.dart';
+import '../settings_screen/notifier/settings_notifier.dart';
 import 'notifier/login_notifier.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -306,7 +310,8 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
 
         // Listen for state changes
         ref.listen(loginNotifier, (previous, current) {
-          if (current.isLoginSuccess ?? false) {
+          if (current.isLoginSuccess == true && previous?.isLoginSuccess != true) {
+            _resetSessionProviders();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Login successful!'),
@@ -316,7 +321,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
             // Navigate to main shell after successful login
             NavigatorService.pushNamedAndRemoveUntil(AppRoutes.mainShellScreen);
           }
-          if (current.loginError != null && current.loginError!.isNotEmpty) {
+          if (current.loginError != null &&
+              current.loginError!.isNotEmpty &&
+              previous?.loginError != current.loginError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(current.loginError!),
@@ -550,6 +557,13 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _onTapJoin(BuildContext context) {
     NavigatorService.pushNamed(AppRoutes.signUpScreen);
+  }
+
+  void _resetSessionProviders() {
+    ref.invalidate(settingsNotifier);
+    ref.invalidate(ideasDashboardNotifier);
+    ref.invalidate(projectExploreDashboardNotifier);
+    ref.invalidate(magicIdeaChatNotifier);
   }
 }
 
